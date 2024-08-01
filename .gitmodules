@@ -4,3 +4,6 @@
 [submodule "lib/slipstream"]
 	path = lib/slipstream
 	url = https://github.com/aerodrome-finance/slipstream
+[submodule "lib/solmate"]
+	path = lib/solmate
+	url = https://github.com/transmissions11/solmate
