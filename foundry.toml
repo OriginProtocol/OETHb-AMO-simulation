@@ -5,9 +5,9 @@ libs = ["lib"]
 verbosity = 3
 auto_detect_remappings = false
 remappings = [
-    "forge-std/ = lib/forge-std/src/",
-    "@slipstream/ = lib/slipstream/contracts/",
-    "@solmate/ = lib/solmate/src/",
+    "forge-std/=lib/forge-std/src/",
+    "@slipstream/=lib/slipstream/contracts/",
+    "@solmate/=lib/solmate/src/",
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
