@@ -10,4 +10,10 @@ remappings = [
     "@solmate/=lib/solmate/src/",
 ]
 
+[etherscan]
+base = { key = "${BASESCAN_API_KEY}", chain = "base" }
+
+[rpc_endpoints]
+base = "https://base-mainnet.g.alchemy.com/v2/${PROVIDER_URL_KEY}"
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
