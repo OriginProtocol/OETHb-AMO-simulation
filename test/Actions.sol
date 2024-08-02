@@ -44,6 +44,13 @@ abstract contract Actions is Base_Test_ {
         return (tokenId, liquidity);
     }
 
+    function addLiquidityAndStake(uint256 amount0, uint256 amount1) public returns (uint256, uint128) {
+        (uint256 tokenId, uint128 liquidity) = addLiquidity(amount0, amount1);
+        stake(tokenId);
+
+        return (tokenId, liquidity);
+    }
+
     ////////////////////////////////////////////////////////////////
     /// --- MANAGE GAUGE
     ////////////////////////////////////////////////////////////////
@@ -55,8 +62,6 @@ abstract contract Actions is Base_Test_ {
     /// --- MANAGE SWAP
     ////////////////////////////////////////////////////////////////
     function swap(address tokenIn, uint256 amountIn) public {
-        deal(tokenIn, address(this), amountIn);
-
         bool zeroForOne = tokenIn == address(token0);
         int256 amountSpecified = zeroForOne ? int256(amountIn) : -int256(amountIn);
         uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.getSqrtRatioAtTick(-100) : TickMath.getSqrtRatioAtTick(100);

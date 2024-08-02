@@ -29,7 +29,6 @@ abstract contract Base_Test_ is Test {
     uint256 public constant DEFAULT_AMOUNT = 100 ether;
 
     IVoter public immutable voter = IVoter(Base.VOTER);
-    uint160 public immutable initialPriceX96 = TickMath.getSqrtRatioAtTick(0);
     ICLPoolFactory public immutable poolFactory = ICLPoolFactory(Base.CLPOOL_FACTORY);
 
     ////////////////////////////////////////////////////////////////
@@ -73,7 +72,7 @@ abstract contract Base_Test_ is Test {
                 tokenA: address(token0),
                 tokenB: address(token1),
                 tickSpacing: TICK_SPACING,
-                sqrtPriceX96: initialPriceX96
+                sqrtPriceX96: getInitialPriceWithRatio()
             })
         );
 
@@ -82,8 +81,6 @@ abstract contract Base_Test_ is Test {
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
 
         // 6. Max approve all tokens
-        token0.approve(address(pool), type(uint256).max);
-        token1.approve(address(pool), type(uint256).max);
         token0.approve(address(nftManager), type(uint256).max);
         token1.approve(address(nftManager), type(uint256).max);
         nftManager.setApprovalForAll(address(gauge), true);
@@ -97,8 +94,18 @@ abstract contract Base_Test_ is Test {
         vm.label(address(nftManager), "NFTManager");
     }
 
+    function getInitialPriceWithRatio() public view returns (uint160) {
+        return (
+            TickMath.getSqrtRatioAtTick(0) * uint160(liquidityRatio)
+                + TickMath.getSqrtRatioAtTick(1) * uint160(1e18 - liquidityRatio)
+        ) / 1e18;
+    }
+
     ////////////////////////////////////////////////////////////////
     /// --- CALLBACK
     ////////////////////////////////////////////////////////////////
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external {}
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external {
+        if (amount0Delta > 0) token0.transfer(address(pool), uint256(amount0Delta));
+        else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
+    }
 }
