@@ -9,6 +9,7 @@ remappings = [
     "@slipstream/=lib/slipstream/contracts/",
     "@solmate/=lib/solmate/src/",
 ]
+ffi = true
 
 [etherscan]
 base = { key = "${BASESCAN_API_KEY}", chain = "base" }
