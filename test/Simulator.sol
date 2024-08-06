@@ -42,15 +42,20 @@ contract Simulator is Actions {
         console.log("Price After:\t %e", pool.getPriceWAD());
     }
 
-    // Try to distribute rewards
     function test2() public {
-        addLiquidityAndStake(80 ether, 20 ether);
-        deal(address(token0), address(this), 100 ether);
-        swap(address(token0), 10 ether);
-        distributeReward(1000 ether);
+        (uint256 tokenId,) = addLiquidityAndStake(
+            DEFAULT_AMOUNT.mulWadDown(liquidityRatio), DEFAULT_AMOUNT.mulWadDown(1e18 - liquidityRatio)
+        );
 
-        console.log("Balance Before:\t %s \t AERO", AERO.balanceOf(address(this)));
-        claimRewards();
-        console.log("Balance After:\t %s \t AERO", AERO.balanceOf(address(this)) / 1 ether);
+        unstake(tokenId);
+        decreaseAllLiquidity(tokenId);
+    }
+
+    function test3() public {
+        (uint256 tokenId,) = addLiquidityAndStake(
+            DEFAULT_AMOUNT.mulWadDown(liquidityRatio), DEFAULT_AMOUNT.mulWadDown(1e18 - liquidityRatio)
+        );
+
+        increaseLiquidityAndStake(tokenId, 100 ether, 1 wei); // need to have at least 1 wei of token on each side.
     }
 }
