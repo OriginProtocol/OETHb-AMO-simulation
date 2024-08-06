@@ -90,13 +90,21 @@ abstract contract Actions is Base_Test_, ERC721Holder {
 
     // --- Decrease liquidity --- //
     function decreaseLiquidity(uint256 tokenId, uint128 liquidity) public returns (uint256, uint256) {
-        return nftManager.decreaseLiquidity(
+        nftManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: tokenId,
                 liquidity: liquidity,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp + 100
+            })
+        );
+        return nftManager.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: tokenId,
+                recipient: address(this),
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
             })
         );
     }
@@ -113,9 +121,15 @@ abstract contract Actions is Base_Test_, ERC721Holder {
         return (amount0, amount1);
     }
 
-    function unstakeAndAllDecreaseLiquidity(uint256 tokenId) public returns (uint256, uint256) {
+    function unstakeAndDecreaseAllLiquidity(uint256 tokenId) public returns (uint256, uint256) {
         unstake(tokenId);
         return decreaseAllLiquidity(tokenId);
+    }
+
+    // Burn position
+    function burnPosition(uint256 tokenId) public {
+        unstakeAndDecreaseAllLiquidity(tokenId);
+        nftManager.burn(tokenId);
     }
 
     ////////////////////////////////////////////////////////////////

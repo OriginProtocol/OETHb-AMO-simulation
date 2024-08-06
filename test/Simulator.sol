@@ -58,4 +58,12 @@ contract Simulator is Actions {
 
         increaseLiquidityAndStake(tokenId, 100 ether, 1 wei); // need to have at least 1 wei of token on each side.
     }
+
+    function test4() public {
+        (uint256 tokenId,) = addLiquidityAndStake(
+            DEFAULT_AMOUNT.mulWadDown(liquidityRatio), DEFAULT_AMOUNT.mulWadDown(1e18 - liquidityRatio)
+        );
+
+        burnPosition(tokenId);
+    }
 }
