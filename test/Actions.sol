@@ -14,6 +14,10 @@ abstract contract Actions is Base_Test_ {
     ////////////////////////////////////////////////////////////////
     function setUp() public virtual override {
         super.setUp();
+
+        // Infinite approval from voter to gauge for AERO
+        vm.prank(address(voter));
+        AERO.approve(address(gauge), type(uint256).max);
     }
 
     ////////////////////////////////////////////////////////////////
@@ -58,13 +62,20 @@ abstract contract Actions is Base_Test_ {
         gauge.deposit(tokenId);
     }
 
+    function distributeReward(uint256 amount) public {
+        skip(10 days);
+        deal(address(AERO), address(voter), amount);
+        vm.startPrank(address(voter));
+        gauge.notifyRewardAmount(amount);
+    }
+
     ////////////////////////////////////////////////////////////////
-    /// --- MANAGE SWAP
+    /// --- MANAGE USER ACTIONS
     ////////////////////////////////////////////////////////////////
     function swap(address tokenIn, uint256 amountIn) public {
         bool zeroForOne = tokenIn == address(token0);
         int256 amountSpecified = zeroForOne ? int256(amountIn) : -int256(amountIn);
-        uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.getSqrtRatioAtTick(-100) : TickMath.getSqrtRatioAtTick(100);
+        uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.getSqrtRatioAtTick(-1) : TickMath.getSqrtRatioAtTick(100);
 
         // Swap
         pool.swap({
@@ -74,5 +85,10 @@ abstract contract Actions is Base_Test_ {
             sqrtPriceLimitX96: sqrtPriceLimitX96,
             data: ""
         });
+    }
+
+    function claimRewards() public {
+        skip(1 days);
+        gauge.getReward(address(this));
     }
 }

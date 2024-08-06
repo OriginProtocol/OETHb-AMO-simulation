@@ -3,6 +3,7 @@ pragma solidity 0.8.25;
 
 library Base {
     address public constant WETH = 0x4200000000000000000000000000000000000006;
+    address public constant AERO = 0x940181a94A35A4569E4529A3CDfB74e38FD98631;
 
     address public constant VOTER = 0x16613524e02ad97eDfeF371bC883F2F5d6C480A5;
     address public constant GOV_VOTER = 0xE6A41fE61E7a1996B59d508661e3f524d6A32075;
