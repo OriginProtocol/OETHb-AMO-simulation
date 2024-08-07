@@ -4,22 +4,9 @@ pragma solidity 0.8.25;
 // Foundry
 import {console} from "lib/forge-std/src/console.sol";
 
-// Solmate
-import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
+import {Base_Test_} from "test/Base.sol";
 
-// Aerodrome
-import {ICLPool} from "test/interfaces/ICLPool.sol";
-
-// Internal utils
-import {Python} from "test/utils/Python.sol";
-
-// Internal for testing
-import {Actions} from "test/Actions.sol";
-
-contract Simulator is Actions {
-    using FixedPointMathLib for uint256;
-    using Python for ICLPool;
-
+contract Simulator is Base_Test_ {
     ////////////////////////////////////////////////////////////////
     /// --- SETUP
     ////////////////////////////////////////////////////////////////
@@ -30,40 +17,14 @@ contract Simulator is Actions {
     ////////////////////////////////////////////////////////////////
     /// --- SIMULATION
     ////////////////////////////////////////////////////////////////
-    function test1() public {
-        addLiquidityAndStake(
-            DEFAULT_AMOUNT.mulWadDown(liquidityRatio), DEFAULT_AMOUNT.mulWadDown(1e18 - liquidityRatio)
-        );
-
-        console.log("Liquidity:\t %e", pool.liquidity());
-        deal(address(token0), address(this), 100 ether);
-        console.log("Price Before:\t %e", pool.getPriceWAD());
-        swap(address(token0), 10 ether);
-        console.log("Price After:\t %e", pool.getPriceWAD());
-    }
-
-    function test2() public {
-        (uint256 tokenId,) = addLiquidityAndStake(
-            DEFAULT_AMOUNT.mulWadDown(liquidityRatio), DEFAULT_AMOUNT.mulWadDown(1e18 - liquidityRatio)
-        );
-
-        unstake(tokenId);
-        decreaseAllLiquidity(tokenId);
-    }
-
-    function test3() public {
-        (uint256 tokenId,) = addLiquidityAndStake(
-            DEFAULT_AMOUNT.mulWadDown(liquidityRatio), DEFAULT_AMOUNT.mulWadDown(1e18 - liquidityRatio)
-        );
-
-        increaseLiquidityAndStake(tokenId, 100 ether, 1 wei); // need to have at least 1 wei of token on each side.
-    }
-
-    function test4() public {
-        (uint256 tokenId,) = addLiquidityAndStake(
-            DEFAULT_AMOUNT.mulWadDown(liquidityRatio), DEFAULT_AMOUNT.mulWadDown(1e18 - liquidityRatio)
-        );
-
-        burnPosition(tokenId);
+    /// @notice First simulation, very simple.
+    /// Give 20 WETH to AMO
+    /// The AMO mint enough OETHb, deposit both in pool and remove all liquidity
+    /// Check balance of WETH at the end
+    function test_simulation1() public {
+        deal(address(token1), address(amo), 20 ether);
+        amo.depositInitialLiquidity(20 ether);
+        amo.removeAllLiquidity();
+        console.log("Balance: %e", amo.checkBalance());
     }
 }

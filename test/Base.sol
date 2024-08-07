@@ -19,6 +19,9 @@ import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionM
 import {Base} from "test/utils/Addresses.sol";
 import {TickMath} from "test/libraries/TickMath.sol";
 
+// Contracts
+import {AMO} from "src/AMO.sol";
+
 abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     /// --- CONSTANTS & IMMUTABLES
@@ -37,6 +40,7 @@ abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     address public feesVotingReward;
 
+    AMO public amo;
     ERC20 public token0; // OETHb
     ERC20 public token1; // WETH
     ERC20 public rewardToken;
@@ -58,10 +62,11 @@ abstract contract Base_Test_ is Test {
         vm.createSelectFork("base", 17906760);
 
         // 2. Create Tokens
-        token0 = ERC20(new MockERC20("Origin ETH Base", "OETHb", 18));
         token1 = ERC20(new MockERC20("Wrapped ETH", "WETH", 18));
+        token0 = ERC20(new MockERC20("Origin ETH Base", "OETHb", 18));
         rewardToken = ERC20(new MockERC20("Reward Token", "RT", 18));
-        if (token1 < token0) (token0, token1) = (token1, token0); // Needed for pool address computing
+        require(address(token0) < address(token1), "Token0 must be less than Token1");
+        // Note: if previous require fails, swap deployment order between token0 and token1.
 
         // 3. Whitelist token0 and token1 in Voter
         vm.startPrank(Base.GOV_VOTER);
@@ -84,6 +89,9 @@ abstract contract Base_Test_ is Test {
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
         feesVotingReward = gauge.feesVotingReward();
 
+        // x. Deploy AMO
+        amo = new AMO(nftManager, pool, token0, token1, liquidityRatio);
+
         // 6. Max approve all tokens
         token0.approve(address(nftManager), type(uint256).max);
         token1.approve(address(nftManager), type(uint256).max);
@@ -99,6 +107,7 @@ abstract contract Base_Test_ is Test {
         vm.label(feesVotingReward, "Fees Voting Reward");
         vm.label(address(voter), "Voter");
         vm.label(address(AERO), "AERO token");
+        vm.label(address(amo), "AMO");
     }
 
     function getInitialPriceWithRatio() public view returns (uint160) {
@@ -106,13 +115,5 @@ abstract contract Base_Test_ is Test {
             TickMath.getSqrtRatioAtTick(0) * uint160(liquidityRatio)
                 + TickMath.getSqrtRatioAtTick(1) * uint160(1e18 - liquidityRatio)
         ) / 1e18;
-    }
-
-    ////////////////////////////////////////////////////////////////
-    /// --- CALLBACK
-    ////////////////////////////////////////////////////////////////
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        if (amount0Delta > 0) token0.transfer(address(pool), uint256(amount0Delta));
-        else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
     }
 }
