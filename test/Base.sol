@@ -20,7 +20,8 @@ import {Base} from "test/utils/Addresses.sol";
 import {TickMath} from "test/libraries/TickMath.sol";
 
 // Contracts
-import {AMO} from "src/AMO.sol";
+import {Vault} from "src/Vault.sol";
+import {StrategyAMO} from "src/StrategyAMO.sol";
 
 abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
@@ -40,10 +41,11 @@ abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     address public feesVotingReward;
 
-    AMO public amo;
     ERC20 public token0; // OETHb
     ERC20 public token1; // WETH
     ERC20 public rewardToken;
+    Vault public vault;
+    StrategyAMO public strategy;
 
     ICLPool public pool;
     ICLGauge public gauge;
@@ -89,8 +91,10 @@ abstract contract Base_Test_ is Test {
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
         feesVotingReward = gauge.feesVotingReward();
 
-        // x. Deploy AMO
-        amo = new AMO(nftManager, pool, token0, token1, liquidityRatio);
+        // x. Deploy StrategyAMO
+        strategy = new StrategyAMO(nftManager, pool, token0, token1, liquidityRatio);
+        vault = new Vault(token0, token1, liquidityRatio, strategy);
+        strategy.setVault(vault);
 
         // 6. Max approve all tokens
         token0.approve(address(nftManager), type(uint256).max);
@@ -107,7 +111,7 @@ abstract contract Base_Test_ is Test {
         vm.label(feesVotingReward, "Fees Voting Reward");
         vm.label(address(voter), "Voter");
         vm.label(address(AERO), "AERO token");
-        vm.label(address(amo), "AMO");
+        vm.label(address(strategy), "StrategyAMO");
     }
 
     function getInitialPriceWithRatio() public view returns (uint160) {

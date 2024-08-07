@@ -7,7 +7,7 @@ import {ICLPool} from "test/interfaces/ICLPool.sol";
 import {TickMath} from "test/libraries/TickMath.sol";
 import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
 
-contract AMO_Actions {
+contract ActionsAMO {
     int24 public immutable DEFAULT_TICK_SPACING;
     int24 public immutable DEFAULT_LOWER_TICK;
     int24 public immutable DEFAULT_UPPER_TICK;
