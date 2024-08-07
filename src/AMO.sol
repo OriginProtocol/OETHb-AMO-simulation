@@ -9,6 +9,7 @@ import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionM
 
 contract AMO is AMO_Actions {
     uint256 public immutable LIQUIDITY_RATIO;
+    uint256 mintedOETHbForFree;
 
     constructor(
         INonfungiblePositionManager _nftManager,
@@ -21,7 +22,7 @@ contract AMO is AMO_Actions {
     }
 
     function checkBalance() external view returns (uint256) {
-        return token1.balanceOf(address(this));
+        return 0;
     }
 
     function rebalance() external {}
@@ -30,7 +31,8 @@ contract AMO is AMO_Actions {
         uint256 amountOETHb = (amountWETH * LIQUIDITY_RATIO) / (1e18 - LIQUIDITY_RATIO);
         // 1. Need to receive WETH
         // 2. Need to mint OETHb
-        _mintOETHb(amountOETHb);
+        _mintOETHb(amountOETHb, address(this));
+        mintedOETHbForFree += amountOETHb;
 
         // 3. Add initial liquidity
         _addIinitialLiquidity(amountOETHb, amountWETH);
@@ -41,6 +43,17 @@ contract AMO is AMO_Actions {
         (uint256 amountOETHb,) = _removeAllLiquidity();
 
         // 2. Burn OETHb
-        _burnOETHb(amountOETHb);
+        //_burnOETHb(amountOETHb, address(this));
+    }
+
+    function mintOETHb(uint256 amount) external {
+        token1.transferFrom(msg.sender, address(this), amount);
+        _mintOETHb(amount, msg.sender);
+    }
+
+    function redeemOETHb(uint256 amount) external {
+        token0.transferFrom(msg.sender, address(this), amount);
+        _burnOETHb(amount, msg.sender);
+        token1.transfer(msg.sender, amount);
     }
 }

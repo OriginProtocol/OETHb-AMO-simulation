@@ -17,7 +17,6 @@ contract AMO_Actions {
     ICLPool public pool;
     INonfungiblePositionManager public nftManager;
 
-    int256 public totalOETHbAMO;
     uint256 public tokenId;
 
     constructor(INonfungiblePositionManager _nftManager, ICLPool _pool, ERC20 _token0, ERC20 _token1) {
@@ -115,13 +114,11 @@ contract AMO_Actions {
         else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
     }
 
-    function _mintOETHb(uint256 amount) internal {
-        totalOETHbAMO += int256(amount);
-        MockERC20(address(token0)).mint(address(this), amount);
+    function _mintOETHb(uint256 amount, address receiver) internal {
+        MockERC20(address(token0)).mint(receiver, amount);
     }
 
-    function _burnOETHb(uint256 amount) internal {
-        totalOETHbAMO -= int256(amount);
-        MockERC20(address(token0)).burn(address(this), amount);
+    function _burnOETHb(uint256 amount, address receiver) internal {
+        MockERC20(address(token0)).burn(receiver, amount);
     }
 }

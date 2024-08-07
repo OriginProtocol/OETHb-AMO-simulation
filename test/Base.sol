@@ -116,4 +116,9 @@ abstract contract Base_Test_ is Test {
                 + TickMath.getSqrtRatioAtTick(1) * uint160(1e18 - liquidityRatio)
         ) / 1e18;
     }
+
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+        if (amount0Delta > 0) token0.transfer(address(pool), uint256(amount0Delta));
+        else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
+    }
 }

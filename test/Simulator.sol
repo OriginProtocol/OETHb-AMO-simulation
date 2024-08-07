@@ -4,6 +4,10 @@ pragma solidity 0.8.25;
 // Foundry
 import {console} from "lib/forge-std/src/console.sol";
 
+//
+import {TickMath} from "test/libraries/TickMath.sol";
+
+//
 import {Base_Test_} from "test/Base.sol";
 
 contract Simulator is Base_Test_ {
@@ -26,5 +30,53 @@ contract Simulator is Base_Test_ {
         amo.depositInitialLiquidity(20 ether);
         amo.removeAllLiquidity();
         console.log("Balance: %e", amo.checkBalance());
+    }
+
+    function test_Simulation2A() public {
+        deal(address(token1), address(amo), 20 ether);
+        amo.depositInitialLiquidity(20 ether);
+
+        _buyOETHb(20 ether);
+        amo.removeAllLiquidity();
+        console.log("Balance: %e", amo.checkBalance());
+    }
+
+    function test_Simulation2B() public {
+        deal(address(token1), address(amo), 20 ether);
+        amo.depositInitialLiquidity(20 ether);
+
+        _dumpOETH(5 ether);
+        amo.removeAllLiquidity();
+        console.log("Balance: %e", amo.checkBalance());
+    }
+
+    function _dumpOETH(uint256 amount) internal {
+        // Give user WETH
+        deal(address(token1), address(this), amount);
+        // User approve AMO to take WETH
+        token1.approve(address(amo), amount);
+        // User mint OETHb against WETH
+        amo.mintOETHb(amount);
+        // User swap OETHb for WETH in the pool
+        pool.swap({
+            recipient: address(this),
+            zeroForOne: true,
+            amountSpecified: int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(-1),
+            data: ""
+        });
+    }
+
+    function _buyOETHb(uint256 amount) internal {
+        // Give user a bit more WETH
+        deal(address(token1), address(this), amount * 11 / 10);
+        // User swap WETH for OETHb in the pool
+        pool.swap({
+            recipient: address(this),
+            zeroForOne: false,
+            amountSpecified: -int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(1),
+            data: ""
+        });
     }
 }
