@@ -8,6 +8,7 @@ import {StrategyAMO} from "src/StrategyAMO.sol";
 
 contract Vault {
     uint256 public ratio;
+    uint256 public oethbMintedForAMO;
 
     ERC20 public weth;
     ERC20 public oethb;
@@ -21,7 +22,7 @@ contract Vault {
     }
 
     function checkBalance() external view returns (uint256) {
-        return weth.balanceOf(address(this)) + strategy.checkBalance() + oethb.totalSupply();
+        return weth.balanceOf(address(this)) + weth.balanceOf(address(strategy)) + oethbMintedForAMO;
     }
 
     function deposit(uint256 amount, address receiver) external {
@@ -39,6 +40,7 @@ contract Vault {
         weth.transfer(address(strategy), amount);
         uint256 amountOETHb = (amount * ratio) / (1e18 - ratio);
         MockERC20(address(oethb)).mint(address(strategy), amountOETHb);
+        oethbMintedForAMO += amountOETHb;
 
         return (amount, amountOETHb);
     }
@@ -48,6 +50,7 @@ contract Vault {
         uint256 ratioAmountWETH = (1e18 - ratio) * amountOETHb / ratio;
         uint256 ratioAmountOETHb = ratio * amountWETH / (1e18 - ratio);
         MockERC20(address(oethb)).burn(address(strategy), min(amountOETHb, ratioAmountOETHb));
+        oethbMintedForAMO -= min(amountOETHb, ratioAmountOETHb);
         weth.transferFrom(address(strategy), address(this), min(amountWETH, ratioAmountWETH));
     }
 

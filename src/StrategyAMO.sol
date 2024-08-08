@@ -23,10 +23,6 @@ contract StrategyAMO is ActionsAMO {
         LIQUIDITY_RATIO = _liquidityRatio;
     }
 
-    function checkBalance() external view returns (uint256) {
-        return token1.balanceOf(address(this));
-    }
-
     function setVault(Vault _vault) external {
         vault = _vault;
         token0.approve(address(vault), type(uint256).max);
