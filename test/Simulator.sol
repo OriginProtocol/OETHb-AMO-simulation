@@ -69,6 +69,7 @@ contract Simulator is Base_Test_ {
     }
 
     /// @notice Third simulation, same as Simulation1, but other user provide liquidity outside of current tick
+    /// In between tick 1 and 2, above current tick
     function test_Simulation4() public {
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
@@ -82,12 +83,16 @@ contract Simulator is Base_Test_ {
         console.log("TotalSupply: %e", token0.totalSupply());
     }
 
+    /// @notice Third simulation, same as Simulation1, but other user provide liquidity outside of current tick
+    /// In between tick -1 and 0, below current tick
     function test_Simulation4B() public {
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
-        deal(address(token1), address(this), 10 ether);
-        _provideLiquidity(1, 10 ether, -1, 0);
+        deal(address(token1), address(this), 10 ether * 101 / 100);
+        vault.deposit(10 ether, address(this));
+
+        _provideLiquidity(10 ether, 1, -1, 0);
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
         strategy.withdrawAllFromPool();
