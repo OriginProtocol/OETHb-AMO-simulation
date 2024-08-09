@@ -100,6 +100,21 @@ contract Simulator is Base_Test_ {
         console.log("TotalSupply: %e", token0.totalSupply());
     }
 
+    function test_Simulation5A() public {
+        // Deposit initial liquidity
+        deal(address(token1), address(this), 20 ether);
+        vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
+
+        // Buy OETHb to move a bit the price
+        _buyOETHb(10 ether);
+
+        // Try to rebalance
+        (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(99e16); // 99%
+        deal(address(token1), address(this), amount1);
+        strategy.finalizeRebalance(amount0, amount1);
+    }
+
     function _dumpOETH(uint256 amount) internal {
         // Give user WETH
         deal(address(token1), address(this), amount);

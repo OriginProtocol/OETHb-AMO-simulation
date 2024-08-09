@@ -8,6 +8,7 @@ remappings = [
     "forge-std/=lib/forge-std/src/",
     "@slipstream/=lib/slipstream/contracts/",
     "@solmate/=lib/solmate/src/",
+    "@solady/=lib/solady/src/",
 ]
 ffi = true
 
