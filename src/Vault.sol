@@ -54,6 +54,17 @@ contract Vault {
         weth.transferFrom(address(strategy), address(this), min(amountWETH, ratioAmountWETH));
     }
 
+    /// @notice To use when the AMO as no more OETHb when doing rebalancing.
+    function mintOETHbForFree(uint256 amount) external {
+        oethbMintedForAMO += amount;
+        MockERC20(address(oethb)).mint(msg.sender, amount);
+    }
+
+    /// @notice To use when the AMO as no more WETH when doing rebalancing.
+    function transferWETHToStrategyForFree(uint256 amount) external {
+        weth.transfer(address(strategy), amount);
+    }
+
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }

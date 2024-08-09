@@ -60,7 +60,7 @@ contract Simulator is Base_Test_ {
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
         console.log("Balance: %e", vault.checkBalance());
-        _dumpOETH(10 ether);
+        _dumpOETHb(10 ether);
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
         strategy.withdrawAllFromPool();
@@ -110,12 +110,77 @@ contract Simulator is Base_Test_ {
         _buyOETHb(10 ether);
 
         // Try to rebalance
+        console.log("Balance: %18e", vault.checkBalance());
         (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(99e16); // 99%
-        deal(address(token1), address(this), amount1);
         strategy.finalizeRebalance(amount0, amount1);
+        console.log("Balance: %18e", vault.checkBalance());
     }
 
-    function _dumpOETH(uint256 amount) internal {
+    function test_Simulation5B() public {
+        // Deposit initial liquidity
+        deal(address(token1), address(this), 20 ether);
+        vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
+
+        // Buy OETHb to move a bit the price
+        _dumpOETHb(10 ether);
+
+        // Try to rebalance
+        console.log("Balance: %18e", vault.checkBalance());
+        (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(50e16); // 99%
+        strategy.finalizeRebalance(amount0, amount1);
+        console.log("Balance: %18e", vault.checkBalance());
+    }
+
+    function test_Simulation6A() public {
+        // Deposit initial liquidity
+        deal(address(token1), address(this), 20 ether);
+        vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
+
+        // Provide Liquiditity between tick 1 and 2
+        deal(address(token1), address(this), 10 ether);
+        _provideLiquidity(1, 10 ether, 1, 2);
+
+        // Buy OETHb to move price between tick 1 and 2
+        console.log("Before swap");
+        pool.slot0();
+        _buyOETHb(85 ether);
+
+        // Try to rebalance
+        console.log("After swap");
+        pool.slot0();
+        console.log("Balance: %18e", vault.checkBalance());
+        (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(99e16); // 99%
+        strategy.finalizeRebalance(amount0, amount1);
+        console.log("Balance: %18e", vault.checkBalance());
+    }
+
+    function test_Simulation6B() public {
+        // Deposit initial liquidity
+        deal(address(token1), address(this), 20 ether);
+        vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
+
+        // Provide Liquiditity between tick 1 and 2
+        deal(address(token1), address(this), 10 ether);
+        _provideLiquidity(1, 10 ether, -1, 0);
+
+        // Buy OETHb to move price between tick 1 and 2
+        console.log("Before swap");
+        pool.slot0();
+        _dumpOETHb(25 ether);
+
+        // Try to rebalance
+        console.log("After swap");
+        pool.slot0();
+        console.log("Balance: %18e", vault.checkBalance());
+        (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(99e16); // 99%
+        strategy.finalizeRebalance(amount0, amount1);
+        console.log("Balance: %18e", vault.checkBalance());
+    }
+
+    function _dumpOETHb(uint256 amount) internal {
         // Give user WETH
         deal(address(token1), address(this), amount);
         // User approve vault to take WETH
