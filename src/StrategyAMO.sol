@@ -97,11 +97,21 @@ contract StrategyAMO is ActionsAMO {
         } else if (amount1 > 0) {
             uint256 balance = token1.balanceOf(address(this));
             if (amount1 > balance) {
-                // This is a tricky situation as someone has bought all the WETH
-                // So in our position, there is only OETHb, and we cannot mint WETH
-                // So we transfer it from the vault
-                vault.transferWETHToStrategyForFree(amount1 - balance);
+                // In this case, we don't have enough WETH to swap, so we take it from the vault.
+                uint256 amountNeeded = amount1 - balance;
+                uint256 balanceVault = token1.balanceOf(address(vault));
+                if (amountNeeded <= balanceVault) {
+                    // Vault has enough WETH to give
+                    vault.transferWETHToStrategyForFree(amountNeeded);
+                } else {
+                    // Vault doesn't have enough WETH to give, so vault transfers all its WETH to the strategy
+                    // And take a debt from DAO
+                    vault.transferWETHToStrategyForFree(balanceVault);
+                    vault.transferWETHToStrategyFromDAOTreasury(amountNeeded - balanceVault);
+                }
+                require(token1.balanceOf(address(this)) >= amount1, "Not enough WETH");
             }
+
             _swap(address(token1), amount1);
         }
         (uint160 currentSqrtPriceX96,,,,,) = pool.slot0();
@@ -125,5 +135,9 @@ contract StrategyAMO is ActionsAMO {
         }
         emit log_named_uint("Liquidity between ticks: ", liquidity);
         return liquidity;
+    }
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 }

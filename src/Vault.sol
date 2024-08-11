@@ -9,6 +9,7 @@ import {StrategyAMO} from "src/StrategyAMO.sol";
 contract Vault {
     uint256 public ratio;
     uint256 public oethbMintedForAMO;
+    uint256 public wethDebt;
 
     ERC20 public weth;
     ERC20 public oethb;
@@ -63,6 +64,11 @@ contract Vault {
     /// @notice To use when the AMO as no more WETH when doing rebalancing.
     function transferWETHToStrategyForFree(uint256 amount) external {
         weth.transfer(address(strategy), amount);
+    }
+
+    function transferWETHToStrategyFromDAOTreasury(uint256 amount) external {
+        wethDebt += amount;
+        MockERC20(address(weth)).mint(msg.sender, amount);
     }
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
