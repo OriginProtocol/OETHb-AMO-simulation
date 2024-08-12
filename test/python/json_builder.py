@@ -5,17 +5,7 @@ import fcntl
 import time
 from eth_abi import decode
 from typing import List, Dict, Any
-
-def decode_uint256_array(encoded_data: str) -> List[int]:
-    try:
-        if encoded_data.startswith('0x'):
-            encoded_data = encoded_data[2:]
-        data_bytes = bytes.fromhex(encoded_data)
-        decoded = decode(['uint256[]'], data_bytes)
-        return decoded[0]
-    except Exception as e:
-        print(f"Error decoding uint256 array: {e}")
-        sys.exit(1)
+from itertools import product
 
 def decode_string_array(encoded_data: str) -> List[str]:
     try:
@@ -28,52 +18,79 @@ def decode_string_array(encoded_data: str) -> List[str]:
         print(f"Error decoding string array: {e}")
         sys.exit(1)
 
-def decode_uint256(encoded_data: str) -> int:
+def decode_uint256_array(encoded_data: str) -> List[int]:
     try:
         if encoded_data.startswith('0x'):
             encoded_data = encoded_data[2:]
         data_bytes = bytes.fromhex(encoded_data)
-        decoded = decode(['uint256'], data_bytes)
+        decoded = decode(['uint256[]'], data_bytes)
         return decoded[0]
     except Exception as e:
-        print(f"Error decoding uint256: {e}")
+        print(f"Error decoding uint256 array: {e}")
         sys.exit(1)
 
-def initialize_json_structure(data: Dict, ratios: List[int], amounts: List[int], output_names: List[str]) -> None:
+def decode_uint256_2d_array(encoded_data: str) -> List[List[int]]:
     try:
+        if encoded_data.startswith('0x'):
+            encoded_data = encoded_data[2:]
+        data_bytes = bytes.fromhex(encoded_data)
+        decoded = decode(['uint256[][]'], data_bytes)
+        return decoded[0]
+    except Exception as e:
+        print(f"Error decoding uint256 2D array: {e}")
+        sys.exit(1)
+
+def initialize_json_structure(data: Dict, input_names: List[str], input_values: List[List[int]], output_names: List[str]) -> None:
+    try:
+        if 'inputs' not in data:
+            data['inputs'] = {}
         if 'outputs' not in data:
             data['outputs'] = {}
+        
+        for name, values in zip(input_names, input_values):
+            data['inputs'][name] = values
+        
+        combinations = list(product(*input_values))
         
         for output_name in output_names:
             if output_name not in data['outputs']:
                 data['outputs'][output_name] = {}
             
-            for ratio in ratios:
-                ratio_str = str(ratio)
-                if ratio_str not in data['outputs'][output_name]:
-                    data['outputs'][output_name][ratio_str] = {}
-                
-                for amount in amounts:
-                    amount_str = str(amount)
-                    if amount_str not in data['outputs'][output_name][ratio_str]:
-                        data['outputs'][output_name][ratio_str][amount_str] = 0
+            current = data['outputs'][output_name]
+            for combo in combinations:
+                temp = current
+                for i, value in enumerate(combo):
+                    value_str = str(value)
+                    if i == len(combo) - 1:
+                        if value_str not in temp:
+                            temp[value_str] = 0  # Initialize with 0 only if not present
+                    else:
+                        if value_str not in temp:
+                            temp[value_str] = {}
+                        temp = temp[value_str]
     except Exception as e:
         print(f"Error initializing JSON structure: {e}")
         sys.exit(1)
 
-def update_json_structure(data: Dict, ratio: int, amount: int, output_names: List[str], output_values: List[int]) -> None:
+def update_json_structure(data: Dict, location: List[int], input_names: List[str], output_names: List[str], output_values: List[int]) -> None:
     try:
-        ratio_str = str(ratio)
-        amount_str = str(amount)
-        
-        for name, value in zip(output_names, output_values):
-            data['outputs'][name][ratio_str][amount_str] = value
+        for output_name, output_value in zip(output_names, output_values):
+            current = data['outputs'][output_name]
+            for i, loc_value in enumerate(location):
+                loc_str = str(loc_value)
+                if i == len(location) - 1:
+                    current[loc_str] = output_value
+                else:
+                    if loc_str not in current:
+                        current[loc_str] = {}
+                    current = current[loc_str]
     except Exception as e:
         print(f"Error updating JSON structure: {e}")
         sys.exit(1)
 
-def load_and_update_json(json_file_path: str, lock_file_path: str, ratios: List[int], amounts: List[int], 
-                         current_ratio: int, current_amount: int,
+def load_and_update_json(json_file_path: str, lock_file_path: str, 
+                         input_names: List[str], input_values: List[List[int]], 
+                         location: List[int],
                          output_names: List[str], output_values: List[int]) -> None:
     with open(lock_file_path, 'w') as lock_file:
         while True:
@@ -91,15 +108,11 @@ def load_and_update_json(json_file_path: str, lock_file_path: str, ratios: List[
             except (FileNotFoundError, json.JSONDecodeError):
                 data = {}
 
-            # Update inputs
-            data['inputs'] = {
-                "ratio": ratios,
-                "amount": amounts
-            }
+            # Initialize structure (this will not overwrite existing values)
+            initialize_json_structure(data, input_names, input_values, output_names)
 
-            # Initialize and update structure
-            initialize_json_structure(data, ratios, amounts, output_names)
-            update_json_structure(data, current_ratio, current_amount, output_names, output_values)
+            # Update structure with new values
+            update_json_structure(data, location, input_names, output_names, output_values)
 
             # Save updated data
             with open(json_file_path, 'w') as json_file:
@@ -113,23 +126,24 @@ def load_and_update_json(json_file_path: str, lock_file_path: str, ratios: List[
 def main():
     lock_file_path = None
     try:
-        if len(sys.argv) != 8:
-            raise ValueError("Incorrect number of arguments. Expected 8 arguments including the script name.")
+        if len(sys.argv) != 7:
+            raise ValueError("Incorrect number of arguments. Expected 7 arguments including the script name.")
 
         json_file_path = sys.argv[1]
         lock_file_path = f"{json_file_path}.lock"
-        ratios = decode_uint256_array(sys.argv[2])
-        amounts = decode_uint256_array(sys.argv[3])
-        current_ratio = decode_uint256(sys.argv[4])
-        current_amount = decode_uint256(sys.argv[5])
-        output_names = decode_string_array(sys.argv[6])
-        output_values = decode_uint256_array(sys.argv[7])
+        input_names = decode_string_array(sys.argv[2])
+        input_values = decode_uint256_2d_array(sys.argv[3])
+        location = decode_uint256_array(sys.argv[4])
+        output_names = decode_string_array(sys.argv[5])
+        output_values = decode_uint256_array(sys.argv[6])
 
+        if len(input_names) != len(input_values):
+            raise ValueError("The number of input names does not match the number of input value lists.")
         if len(output_names) != len(output_values):
             raise ValueError("The number of output names does not match the number of output values.")
 
-        load_and_update_json(json_file_path, lock_file_path, ratios, amounts, current_ratio, current_amount,
-                             output_names, output_values)
+        load_and_update_json(json_file_path, lock_file_path, input_names, input_values, 
+                             location, output_names, output_values)
 
     except Exception as e:
         print(f"An error occurred: {e}")
