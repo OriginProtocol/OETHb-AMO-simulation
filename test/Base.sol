@@ -48,6 +48,8 @@ abstract contract Base_Test_ is Test {
     ICLGauge public gauge;
     INonfungiblePositionManager public nftManager;
 
+    string public path;
+
     ////////////////////////////////////////////////////////////////
     /// --- SETUP
     ////////////////////////////////////////////////////////////////
@@ -67,6 +69,11 @@ abstract contract Base_Test_ is Test {
         voter.whitelistToken(address(token0), true);
         voter.whitelistToken(address(token1), true);
         vm.stopPrank();
+
+        path = string(abi.encodePacked(vm.projectRoot(), "/data/"));
+        if (!vm.isDir(path)) {
+            vm.createDir(string(abi.encodePacked(vm.projectRoot(), "/data/")), false);
+        }
     }
 
     function initialize(uint256 ratio) public {
