@@ -13,7 +13,7 @@ import {Base_Test_} from "test/Base.sol";
 
 import {Exporter} from "test/utils/Exporter.sol";
 
-contract SimulatorV2 is Base_Test_ {
+contract Simulation1 is Base_Test_ {
     using Exporter for string;
 
     // Input parameters
@@ -37,25 +37,25 @@ contract SimulatorV2 is Base_Test_ {
         outputs[3] = "VaultBalanceAfter";
     }
 
-    function test_Simulation1() public {
+    function test_Simulation1_1() public {
         uint256[] memory results = new uint256[](4);
         results = _simulation(ratios[0], amounts[0]);
         name.exportSimulation1(ratios, amounts, ratios[0], amounts[0], outputs, results);
     }
 
-    function test_Simulation2() public {
+    function test_Simulation1_2() public {
         uint256[] memory results = new uint256[](4);
         results = _simulation(ratios[0], amounts[1]);
         name.exportSimulation1(ratios, amounts, ratios[0], amounts[1], outputs, results);
     }
 
-    function test_Simulation3() public {
+    function test_Simulation1_3() public {
         uint256[] memory results = new uint256[](4);
         results = _simulation(ratios[1], amounts[0]);
         name.exportSimulation1(ratios, amounts, ratios[1], amounts[0], outputs, results);
     }
 
-    function test_Simulation4() public {
+    function test_Simulation1_4() public {
         uint256[] memory results = new uint256[](4);
         results = _simulation(ratios[1], amounts[1]);
         name.exportSimulation1(ratios, amounts, ratios[1], amounts[1], outputs, results);
@@ -67,7 +67,7 @@ contract SimulatorV2 is Base_Test_ {
         vault.deposit(amount, address(this));
 
         // Check values before
-        uint256 totalSupplyBefore = token1.totalSupply();
+        uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
         strategy.depositInPool(amount);
@@ -75,7 +75,7 @@ contract SimulatorV2 is Base_Test_ {
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
-        uint256 totalSupplyAfter = token1.totalSupply();
+        uint256 totalSupplyAfter = token0.totalSupply();
 
         uint256[] memory results = new uint256[](4);
         results[0] = totalSupplyBefore;

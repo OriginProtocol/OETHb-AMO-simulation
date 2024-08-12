@@ -121,4 +121,57 @@ abstract contract Base_Test_ is Test {
         if (amount0Delta > 0) token0.transfer(address(pool), uint256(amount0Delta));
         else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
     }
+
+    function _buyOETHb(uint256 amount) internal {
+        // Give user a bit more WETH
+        deal(address(token1), address(this), amount * 101 / 100);
+        // User swap WETH for OETHb in the pool
+        pool.swap({
+            recipient: address(this),
+            zeroForOne: false,
+            amountSpecified: -int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(1),
+            data: ""
+        });
+    }
+
+    function _dumpOETHb(uint256 amount) internal {
+        // Give user WETH
+        deal(address(token1), address(this), amount);
+        // User approve vault to take WETH
+        token1.approve(address(vault), amount);
+        // User mint OETHb against WETH
+        vault.deposit(amount, address(this));
+        // User swap OETHb for WETH in the pool
+        pool.swap({
+            recipient: address(this),
+            zeroForOne: true,
+            amountSpecified: int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(-1),
+            data: ""
+        });
+    }
+
+    /// Note: weird issue of amountDesired shouldn't be 0 even if it's not used, for example deposit full outside of current tick.
+    function _provideLiquidity(uint256 amount0, uint256 amount1, int24 tickLower, int24 tickUpper)
+        internal
+        returns (uint256 tokenId, uint128 liquidity, uint256 _amount0, uint256 _amount1)
+    {
+        return nftManager.mint(
+            INonfungiblePositionManager.MintParams({
+                token0: address(token0),
+                token1: address(token1),
+                tickSpacing: 1,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                amount0Desired: amount0,
+                amount1Desired: amount1,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: address(this),
+                deadline: block.timestamp + 100,
+                sqrtPriceX96: 0
+            })
+        );
+    }
 }

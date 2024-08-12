@@ -17,6 +17,7 @@ import {Exporter} from "test/utils/Exporter.sol";
 contract Simulator is Base_Test_ {
     using Exporter for string;
 
+    /*
     ////////////////////////////////////////////////////////////////
     /// --- SIMULATION
     ////////////////////////////////////////////////////////////////
@@ -182,8 +183,9 @@ contract Simulator is Base_Test_ {
         (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(99e16); // 99%
         strategy.finalizeRebalance(amount0, amount1);
         console.log("Balance: %18e", vault.checkBalance());
-    }
+    }*/
 
+    /*
     function _dumpOETHb(uint256 amount) internal {
         // Give user WETH
         deal(address(token1), address(this), amount);
@@ -199,8 +201,9 @@ contract Simulator is Base_Test_ {
             sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(-1),
             data: ""
         });
-    }
+    }*/
 
+    /*
     function _buyOETHb(uint256 amount) internal {
         // Give user a bit more WETH
         deal(address(token1), address(this), amount * 101 / 100);
@@ -212,8 +215,9 @@ contract Simulator is Base_Test_ {
             sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(1),
             data: ""
         });
-    }
+    }*/
 
+   /*
     /// Note: weird issue of amountDesired shouldn't be 0 even if it's not used, for example deposit full outside of current tick.
     function _provideLiquidity(uint256 amount0, uint256 amount1, int24 tickLower, int24 tickUpper)
         internal
@@ -235,5 +239,5 @@ contract Simulator is Base_Test_ {
                 sqrtPriceX96: 0
             })
         );
-    }
+    }*/
 }
