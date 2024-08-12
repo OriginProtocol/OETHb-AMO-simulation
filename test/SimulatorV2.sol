@@ -11,12 +11,17 @@ pragma solidity 0.8.25;
 //
 import {Base_Test_} from "test/Base.sol";
 
-import {Exporter} from "test/utils/ExporterV2.sol";
+import {Exporter} from "test/utils/Exporter.sol";
 
 contract SimulatorV2 is Base_Test_ {
+    using Exporter for string;
+
     // Input parameters
     uint256[] public ratios;
     uint256[] public amounts;
+    string[] public outputs;
+
+    string name = "Simulation1";
 
     constructor() {
         ratios = new uint256[](2);
@@ -25,49 +30,38 @@ contract SimulatorV2 is Base_Test_ {
         ratios[1] = 90e16;
         amounts[0] = 20 ether;
         amounts[1] = 50 ether;
+        outputs = new string[](4);
+        outputs[0] = "TotalSupplyBefore";
+        outputs[1] = "VaultBalanceBefore";
+        outputs[2] = "TotalSupplyAfter";
+        outputs[3] = "VaultBalanceAfter";
     }
 
-    function test_Simulation_Ratio1_Amount1() public {
-        (uint256 totalSupplyBefore, uint256 balanceBefore, uint256 totalSupplyAfter, uint256 balanceAfter) =
-            _simulation(ratios[0], amounts[0]);
-        Exporter.exportSimulation1(
-            ratios, amounts, ratios[0], amounts[0], totalSupplyBefore, balanceBefore, balanceAfter, totalSupplyAfter
-        );
+    function test_Simulation1() public {
+        uint256[] memory results = new uint256[](4);
+        results = _simulation(ratios[0], amounts[0]);
+        name.exportSimulation1(ratios, amounts, ratios[0], amounts[0], outputs, results);
     }
 
-    function test_Simulation_Ratio1_Amount2() public {
-        (uint256 totalSupplyBefore, uint256 balanceBefore, uint256 totalSupplyAfter, uint256 balanceAfter) =
-            _simulation(ratios[0], amounts[1]);
-        Exporter.exportSimulation1(
-            ratios, amounts, ratios[0], amounts[1], totalSupplyBefore, balanceBefore, balanceAfter, totalSupplyAfter
-        );
+    function test_Simulation2() public {
+        uint256[] memory results = new uint256[](4);
+        results = _simulation(ratios[0], amounts[1]);
+        name.exportSimulation1(ratios, amounts, ratios[0], amounts[1], outputs, results);
     }
 
-    function test_Simulation_Ratio2_Amount1() public {
-        (uint256 totalSupplyBefore, uint256 balanceBefore, uint256 totalSupplyAfter, uint256 balanceAfter) =
-            _simulation(ratios[1], amounts[0]);
-        Exporter.exportSimulation1(
-            ratios, amounts, ratios[1], amounts[0], totalSupplyBefore, balanceBefore, balanceAfter, totalSupplyAfter
-        );
+    function test_Simulation3() public {
+        uint256[] memory results = new uint256[](4);
+        results = _simulation(ratios[1], amounts[0]);
+        name.exportSimulation1(ratios, amounts, ratios[1], amounts[0], outputs, results);
     }
 
-    function test_Simulation_Ratio2_Amount2() public {
-        (uint256 totalSupplyBefore, uint256 balanceBefore, uint256 totalSupplyAfter, uint256 balanceAfter) =
-            _simulation(ratios[1], amounts[1]);
-        Exporter.exportSimulation1(
-            ratios, amounts, ratios[1], amounts[1], totalSupplyBefore, balanceBefore, balanceAfter, totalSupplyAfter
-        );
+    function test_Simulation4() public {
+        uint256[] memory results = new uint256[](4);
+        results = _simulation(ratios[1], amounts[1]);
+        name.exportSimulation1(ratios, amounts, ratios[1], amounts[1], outputs, results);
     }
 
-    function test_Simulation_Ratio3_Amount2() public {
-        (uint256 totalSupplyBefore, uint256 balanceBefore, uint256 totalSupplyAfter, uint256 balanceAfter) =
-            _simulation(ratios[2], amounts[1]);
-        Exporter.exportSimulation1(
-            ratios, amounts, ratios[2], amounts[1], totalSupplyBefore, balanceBefore, balanceAfter, totalSupplyAfter
-        );
-    }
-
-    function _simulation(uint256 ratio, uint256 amount) internal returns (uint256, uint256, uint256, uint256) {
+    function _simulation(uint256 ratio, uint256 amount) internal returns (uint256[] memory) {
         initialize(ratio);
         deal(address(token1), address(this), amount);
         vault.deposit(amount, address(this));
@@ -83,7 +77,13 @@ contract SimulatorV2 is Base_Test_ {
         uint256 balanceAfter = vault.checkBalance();
         uint256 totalSupplyAfter = token1.totalSupply();
 
+        uint256[] memory results = new uint256[](4);
+        results[0] = totalSupplyBefore;
+        results[1] = balanceBefore;
+        results[2] = totalSupplyAfter;
+        results[3] = balanceAfter;
+
         // Return values
-        return (totalSupplyBefore, balanceBefore, totalSupplyAfter, balanceAfter);
+        return results;
     }
 }

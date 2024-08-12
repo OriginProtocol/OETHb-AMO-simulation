@@ -9,22 +9,25 @@ library Exporter {
 
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
-    event log_named_uint(string name, uint256 value);
-
     function exportSimulation1(
-        string memory path,
         string memory name,
         uint256[] memory ratios,
-        uint256[][] memory amounts,
-        uint256[][] memory checkBalances
+        uint256[] memory amounts,
+        uint256 ratio,
+        uint256 amount,
+        string[] memory outputs,
+        uint256[] memory results
     ) public {
-        string[] memory calldataPython = new string[](6);
+        string[] memory calldataPython = new string[](9);
         calldataPython[0] = "python3";
-        calldataPython[1] = string(abi.encodePacked(vm.projectRoot(), "/test/python/simulation_1.py"));
-        calldataPython[2] = string(abi.encodePacked(path, name));
+        calldataPython[1] = string(abi.encodePacked(vm.projectRoot(), "/test/python/json_builder.py"));
+        calldataPython[2] = string(abi.encodePacked(vm.projectRoot(), "/data/", name, ".json"));
         calldataPython[3] = vm.toString(abi.encode(ratios));
         calldataPython[4] = vm.toString(abi.encode(amounts));
-        calldataPython[5] = vm.toString(abi.encode(checkBalances));
+        calldataPython[5] = vm.toString(abi.encode(ratio));
+        calldataPython[6] = vm.toString(abi.encode(amount));
+        calldataPython[7] = vm.toString(abi.encode(outputs));
+        calldataPython[8] = vm.toString(abi.encode(results));
 
         vm.ffi(calldataPython);
     }
