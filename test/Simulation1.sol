@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
-// Foundry
-//import {console} from "lib/forge-std/src/console.sol";
-
-//import {TickMath} from "test/libraries/TickMath.sol";
-
-//import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
-
-//
+// Base for simulation
 import {Base_Test_} from "test/Base.sol";
 
+// Export data
 import {Exporter} from "test/utils/Exporter.sol";
 
 contract Simulation1 is Base_Test_ {

@@ -51,7 +51,7 @@ contract StrategyAMO is ActionsAMO {
 
     event log_named_uint(string name, uint256 value);
 
-    function prepareRebalance(uint256 percentage) external returns (uint256, uint256) {
+    function prepareRebalance(uint256 percentage) public returns (uint256, uint256) {
         // First remove liquidity from pool
         (,,,,,,, uint128 liquidity,,,,) = nftManager.positions(tokenId);
         uint128 adjustedLiquidity = SafeCastLib.toUint128(liquidity * percentage / 1e18);
@@ -122,6 +122,11 @@ contract StrategyAMO is ActionsAMO {
 
         // Second add liquidity to pool
         _increaseLiquidity(token0.balanceOf(address(this)), token1.balanceOf(address(this)));
+    }
+
+    function rebalance(uint256 percentage) public {
+        (uint256 amount0, uint256 amount1) = prepareRebalance(percentage);
+        finalizeRebalance(amount0, amount1);
     }
 
     function _getLiquidityBetweenTicks(int24 lowerTick, int24 upperTick) internal returns (uint128) {

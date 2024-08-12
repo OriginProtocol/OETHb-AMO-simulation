@@ -7,7 +7,7 @@ import {Base_Test_} from "test/Base.sol";
 // Export data
 import {Exporter} from "test/utils/Exporter.sol";
 
-contract Simulation3A is Base_Test_ {
+contract Simulation5A is Base_Test_ {
     using Exporter for string;
 
     // Input parameters
@@ -15,7 +15,7 @@ contract Simulation3A is Base_Test_ {
     uint256[][] public values;
     string[] public outputs;
 
-    string name = "Simulation3A";
+    string name = "Simulation5A";
 
     constructor() {
         inputs = new string[](3);
@@ -28,19 +28,20 @@ contract Simulation3A is Base_Test_ {
         values[0][0] = 8e17;
         values[0][1] = 9e17;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 10 ether;
-        values[1][1] = 20 ether;
-        values[2] = new uint256[](4); // Ticks
+        values[1][0] = 70 ether; // Less than initial liquidity deposited
+        values[1][1] = 90 ether; // More than initial liquidity deposited
+        values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 1;
         values[2][1] = 10;
-        values[2][2] = 100;
-        values[2][3] = 1000;
+        values[2][2] = 1_000;
+        values[2][3] = 10_000;
 
-        outputs = new string[](4);
+        outputs = new string[](5);
         outputs[0] = "TotalSupplyBefore";
         outputs[1] = "VaultBalanceBefore";
         outputs[2] = "TotalSupplyAfter";
         outputs[3] = "VaultBalanceAfter";
+        outputs[4] = "WETHDebt";
     }
 
     function test_Simulation3_1() public {
@@ -49,7 +50,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -61,7 +62,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -73,7 +74,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -85,7 +86,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -97,7 +98,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -109,7 +110,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -121,7 +122,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -133,7 +134,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -145,7 +146,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -157,7 +158,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -169,7 +170,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -181,7 +182,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -193,7 +194,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -205,7 +206,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -217,7 +218,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -229,7 +230,7 @@ contract Simulation3A is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -239,30 +240,39 @@ contract Simulation3A is Base_Test_ {
         initialize(ratio);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
 
         // Check values before
         uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
-        deal(address(token1), address(this), amount);
-        _provideLiquidity(1, amount, ticks, ticks + 1);
+        // Provide Liquiditity outside of current ticks
+        deal(address(token1), address(this), 10 ether);
+        _provideLiquidity(1, 10 ether, ticks, ticks + 1);
+
+        // Try to push price in new ticks
+        _buyOETHb(amount);
+
+        // Try to rebalance
+        strategy.rebalance(99e16);
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
         uint256 totalSupplyAfter = token0.totalSupply();
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results[0] = totalSupplyBefore;
         results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
+        results[4] = vault.wethDebt();
 
         // Return values
         return results;
     }
 }
 
-contract Simulation3B is Base_Test_ {
+contract Simulation5B is Base_Test_ {
     using Exporter for string;
 
     // Input parameters
@@ -270,7 +280,7 @@ contract Simulation3B is Base_Test_ {
     uint256[][] public values;
     string[] public outputs;
 
-    string name = "Simulation3B";
+    string name = "Simulation5B";
 
     constructor() {
         inputs = new string[](3);
@@ -283,19 +293,20 @@ contract Simulation3B is Base_Test_ {
         values[0][0] = 8e17;
         values[0][1] = 9e17;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 10 ether;
-        values[1][1] = 20 ether;
-        values[2] = new uint256[](4); // Ticks
+        values[1][0] = 15 ether; // Less than initial liquidity deposited
+        values[1][1] = 25 ether; // More than initial liquidity deposited
+        values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 1;
         values[2][1] = 10;
-        values[2][2] = 100;
-        values[2][3] = 1000;
+        values[2][2] = 1_000;
+        values[2][3] = 10_000;
 
-        outputs = new string[](4);
+        outputs = new string[](5);
         outputs[0] = "TotalSupplyBefore";
         outputs[1] = "VaultBalanceBefore";
         outputs[2] = "TotalSupplyAfter";
         outputs[3] = "VaultBalanceAfter";
+        outputs[4] = "WETHDebt";
     }
 
     function test_Simulation3_1() public {
@@ -304,7 +315,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -316,7 +327,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -328,7 +339,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -340,7 +351,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -352,7 +363,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -364,7 +375,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -376,7 +387,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -388,7 +399,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -400,7 +411,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -412,7 +423,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -424,7 +435,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -436,7 +447,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -448,7 +459,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -460,7 +471,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -472,7 +483,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -484,7 +495,7 @@ contract Simulation3B is Base_Test_ {
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
 
         name.exportSimulation1(inputs, values, location, outputs, results);
@@ -494,23 +505,32 @@ contract Simulation3B is Base_Test_ {
         initialize(ratio);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
 
         // Check values before
         uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
-        deal(address(token1), address(this), amount);
-        _provideLiquidity(1, amount, -ticks - 1, -ticks);
+        // Provide Liquiditity outside of current ticks
+        deal(address(token1), address(this), 10 ether);
+        _provideLiquidity(1, 10 ether, -ticks - 1, -ticks);
+
+        // Try to push price in new ticks
+        _dumpOETHb(amount);
+
+        // Try to rebalance
+        strategy.rebalance(99e16);
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
         uint256 totalSupplyAfter = token0.totalSupply();
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results[0] = totalSupplyBefore;
         results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
+        results[4] = vault.wethDebt();
 
         // Return values
         return results;

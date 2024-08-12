@@ -1,23 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
-// Foundry
-import {console} from "lib/forge-std/src/console.sol";
-
-//
-import {TickMath} from "test/libraries/TickMath.sol";
-
-import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
-
-//
+// Base for simulation
 import {Base_Test_} from "test/Base.sol";
 
-import {Exporter} from "test/utils/Exporter.sol";
-
+// Not used anymore, will be soon deleted
 contract Simulator is Base_Test_ {
-    using Exporter for string;
-
-    /*
+/*
     ////////////////////////////////////////////////////////////////
     /// --- SIMULATION
     ////////////////////////////////////////////////////////////////
@@ -36,7 +25,6 @@ contract Simulator is Base_Test_ {
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
     }
-
     /// @notice Second simulation, same as before + a user swap WETH for OETHb
     function test_Simulation2A() public {
         initialize(8e17);
@@ -51,7 +39,6 @@ contract Simulator is Base_Test_ {
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
     }
-
     /// @notice Second simulation, same as before + a user swap OETHb for WETH
     function test_Simulation2B() public {
         initialize(8e17);
@@ -66,7 +53,6 @@ contract Simulator is Base_Test_ {
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
     }
-
     /// @notice Third simulation, same as Simulation1, but other user provide liquidity outside of current tick
     /// In between tick 1 and 2, above current tick
     function test_Simulation4() public {
@@ -82,7 +68,6 @@ contract Simulator is Base_Test_ {
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
     }
-
     /// @notice Third simulation, same as Simulation1, but other user provide liquidity outside of current tick
     /// In between tick -1 and 0, below current tick
     function test_Simulation4B() public {
@@ -92,7 +77,6 @@ contract Simulator is Base_Test_ {
         strategy.depositInPool(20 ether);
         deal(address(token1), address(this), 10 ether * 101 / 100);
         vault.deposit(10 ether, address(this));
-
         _provideLiquidity(10 ether, 1, -1, 0);
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
@@ -100,57 +84,47 @@ contract Simulator is Base_Test_ {
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
     }
-
     function test_Simulation5A() public {
         initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
-
         // Buy OETHb to move a bit the price
         _buyOETHb(10 ether);
-
         // Try to rebalance
         console.log("Balance: %18e", vault.checkBalance());
         (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(99e16); // 99%
         strategy.finalizeRebalance(amount0, amount1);
         console.log("Balance: %18e", vault.checkBalance());
     }
-
     function test_Simulation5B() public {
         initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
-
         // Buy OETHb to move a bit the price
         _dumpOETHb(10 ether);
-
         // Try to rebalance
         console.log("Balance: %18e", vault.checkBalance());
         (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(50e16); // 99%
         strategy.finalizeRebalance(amount0, amount1);
         console.log("Balance: %18e", vault.checkBalance());
     }
-
     function test_Simulation6A() public {
         initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
-
         // Provide Liquiditity between tick 1 and 2
         deal(address(token1), address(this), 10 ether);
         _provideLiquidity(1, 10 ether, 1, 2);
-
         // Buy OETHb to move price between tick 1 and 2
         console.log("Before swap");
         pool.slot0();
         _buyOETHb(85 ether);
-
         // Try to rebalance
         console.log("After swap");
         pool.slot0();
@@ -159,23 +133,19 @@ contract Simulator is Base_Test_ {
         strategy.finalizeRebalance(amount0, amount1);
         console.log("Balance: %18e", vault.checkBalance());
     }
-
     function test_Simulation6B() public {
         initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
-
         // Provide Liquiditity between tick 1 and 2
         deal(address(token1), address(this), 10 ether);
         _provideLiquidity(1, 10 ether, -1, 0);
-
         // Buy OETHb to move price between tick 1 and 2
         console.log("Before swap");
         pool.slot0();
         _dumpOETHb(25 ether);
-
         // Try to rebalance
         console.log("After swap");
         pool.slot0();
@@ -184,8 +154,7 @@ contract Simulator is Base_Test_ {
         strategy.finalizeRebalance(amount0, amount1);
         console.log("Balance: %18e", vault.checkBalance());
     }*/
-
-    /*
+/*
     function _dumpOETHb(uint256 amount) internal {
         // Give user WETH
         deal(address(token1), address(this), amount);
@@ -203,7 +172,7 @@ contract Simulator is Base_Test_ {
         });
     }*/
 
-    /*
+/*
     function _buyOETHb(uint256 amount) internal {
         // Give user a bit more WETH
         deal(address(token1), address(this), amount * 101 / 100);
@@ -217,7 +186,7 @@ contract Simulator is Base_Test_ {
         });
     }*/
 
-   /*
+/*
     /// Note: weird issue of amountDesired shouldn't be 0 even if it's not used, for example deposit full outside of current tick.
     function _provideLiquidity(uint256 amount0, uint256 amount1, int24 tickLower, int24 tickUpper)
         internal
