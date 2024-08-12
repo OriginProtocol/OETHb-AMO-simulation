@@ -14,15 +14,6 @@ import {Base_Test_} from "test/Base.sol";
 
 contract Simulator is Base_Test_ {
     ////////////////////////////////////////////////////////////////
-    /// --- SETUP
-    ////////////////////////////////////////////////////////////////
-    function setUp() public virtual override {
-        super.setUp();
-        token1.approve(address(vault), type(uint256).max);
-        token1.approve(address(nftManager), type(uint256).max);
-    }
-
-    ////////////////////////////////////////////////////////////////
     /// --- SIMULATION
     ////////////////////////////////////////////////////////////////
     /// @notice First simulation, very simple.
@@ -30,6 +21,7 @@ contract Simulator is Base_Test_ {
     /// The AMO mint enough OETHb, deposit both in pool and remove all liquidity
     /// Check balance of WETH at the end
     function test_Simulation1() public {
+        initialize(8e17);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
@@ -42,6 +34,7 @@ contract Simulator is Base_Test_ {
 
     /// @notice Second simulation, same as before + a user swap WETH for OETHb
     function test_Simulation2A() public {
+        initialize(8e17);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
@@ -56,6 +49,7 @@ contract Simulator is Base_Test_ {
 
     /// @notice Second simulation, same as before + a user swap OETHb for WETH
     function test_Simulation2B() public {
+        initialize(8e17);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
@@ -71,6 +65,7 @@ contract Simulator is Base_Test_ {
     /// @notice Third simulation, same as Simulation1, but other user provide liquidity outside of current tick
     /// In between tick 1 and 2, above current tick
     function test_Simulation4() public {
+        initialize(8e17);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
@@ -86,6 +81,7 @@ contract Simulator is Base_Test_ {
     /// @notice Third simulation, same as Simulation1, but other user provide liquidity outside of current tick
     /// In between tick -1 and 0, below current tick
     function test_Simulation4B() public {
+        initialize(8e17);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
@@ -101,6 +97,7 @@ contract Simulator is Base_Test_ {
     }
 
     function test_Simulation5A() public {
+        initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
@@ -117,6 +114,7 @@ contract Simulator is Base_Test_ {
     }
 
     function test_Simulation5B() public {
+        initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
@@ -133,6 +131,7 @@ contract Simulator is Base_Test_ {
     }
 
     function test_Simulation6A() public {
+        initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
@@ -157,6 +156,7 @@ contract Simulator is Base_Test_ {
     }
 
     function test_Simulation6B() public {
+        initialize(8e17);
         // Deposit initial liquidity
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));

@@ -30,7 +30,6 @@ abstract contract Base_Test_ is Test {
     int24 public constant LOWER_TICK = 0;
     int24 public constant UPPER_TICK = 1;
     int24 public constant TICK_SPACING = 1;
-    uint256 public constant DEFAULT_AMOUNT = 100 ether;
 
     ERC20 public immutable AERO = ERC20(Base.AERO);
     IVoter public immutable voter = IVoter(Base.VOTER);
@@ -39,8 +38,6 @@ abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     /// --- CONTRACTS & INTERFACES
     ////////////////////////////////////////////////////////////////
-    address public feesVotingReward;
-
     ERC20 public token0; // OETHb
     ERC20 public token1; // WETH
     ERC20 public rewardToken;
@@ -50,11 +47,6 @@ abstract contract Base_Test_ is Test {
     ICLPool public pool;
     ICLGauge public gauge;
     INonfungiblePositionManager public nftManager;
-
-    ////////////////////////////////////////////////////////////////
-    /// --- STATE VARIABLES
-    ////////////////////////////////////////////////////////////////
-    uint256 public liquidityRatio = 8e17; // 80% OETHb, 20% WETH
 
     ////////////////////////////////////////////////////////////////
     /// --- SETUP
@@ -70,54 +62,51 @@ abstract contract Base_Test_ is Test {
         require(address(token0) < address(token1), "Token0 must be less than Token1");
         // Note: if previous require fails, swap deployment order between token0 and token1.
 
-        // 3. Whitelist token0 and token1 in Voter
+        // 3. Whitelist token0 and token1 in Voter: Not needed anymore
         vm.startPrank(Base.GOV_VOTER);
         voter.whitelistToken(address(token0), true);
         voter.whitelistToken(address(token1), true);
         vm.stopPrank();
+    }
 
-        // 4. Create Pool
+    function initialize(uint256 ratio) public {
+        // 1. Create Pool
         pool = ICLPool(
             poolFactory.createPool({
                 tokenA: address(token0),
                 tokenB: address(token1),
                 tickSpacing: TICK_SPACING,
-                sqrtPriceX96: getInitialPriceWithRatio()
+                sqrtPriceX96: getInitialPriceWithRatio(ratio)
             })
         );
 
-        // 5. Create Gauge
-        gauge = ICLGauge(payable(voter.createGauge({_poolFactory: address(poolFactory), _pool: address(pool)})));
+        // 2. Create Gauge and get NFT Manager
+        gauge = ICLGauge(payable(voter.createGauge(address(poolFactory), address(pool))));
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
-        feesVotingReward = gauge.feesVotingReward();
 
-        // x. Deploy StrategyAMO
-        strategy = new StrategyAMO(nftManager, pool, token0, token1, liquidityRatio);
-        vault = new Vault(token0, token1, liquidityRatio, strategy);
+        // Deploy StrategyAMO and Vault
+        strategy = new StrategyAMO(nftManager, pool, token0, token1, ratio);
+        vault = new Vault(token0, token1, ratio, strategy);
         strategy.setVault(vault);
 
-        // 6. Max approve all tokens
+        // Approvals
         token0.approve(address(nftManager), type(uint256).max);
         token1.approve(address(nftManager), type(uint256).max);
+        token1.approve(address(vault), type(uint256).max);
         nftManager.setApprovalForAll(address(gauge), true);
 
-        // 7. Label contracts
-        vm.label(address(token0), "OETHb");
+        // Label
         vm.label(address(token1), "WETH");
-        vm.label(address(rewardToken), "Reward Token");
+        vm.label(address(token0), "OETHb");
+        vm.label(address(strategy), "StrategyAMO");
+        vm.label(address(nftManager), "NFTManager");
         vm.label(address(pool), "CLPool OETHb/WETH");
         vm.label(address(gauge), "CLGauge OETHb/WETH");
-        vm.label(address(nftManager), "NFTManager");
-        vm.label(feesVotingReward, "Fees Voting Reward");
-        vm.label(address(voter), "Voter");
-        vm.label(address(AERO), "AERO token");
-        vm.label(address(strategy), "StrategyAMO");
     }
 
-    function getInitialPriceWithRatio() public view returns (uint160) {
+    function getInitialPriceWithRatio(uint256 ratio) public pure returns (uint160) {
         return (
-            TickMath.getSqrtRatioAtTick(0) * uint160(liquidityRatio)
-                + TickMath.getSqrtRatioAtTick(1) * uint160(1e18 - liquidityRatio)
+            TickMath.getSqrtRatioAtTick(0) * uint160(ratio) + TickMath.getSqrtRatioAtTick(1) * uint160(1e18 - ratio)
         ) / 1e18;
     }
 
