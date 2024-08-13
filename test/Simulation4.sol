@@ -25,25 +25,26 @@ contract Simulation4A is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
-        values[1] = new uint256[](2); // Amounts
-        values[1][0] = 10 ether;
-        values[1][1] = 15 ether;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
+        values[1] = new uint256[](2); // Swap Amounts
+        values[1][0] = 50 ether;
+        values[1][1] = 95 ether;
         values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 75e16;
         values[2][1] = 80e16;
         values[2][2] = 95e16;
         values[2][3] = 99e16;
 
-        outputs = new string[](4);
+        outputs = new string[](5);
         outputs[0] = "TotalSupplyBefore";
         outputs[1] = "VaultBalanceBefore";
         outputs[2] = "TotalSupplyAfter";
         outputs[3] = "VaultBalanceAfter";
+        outputs[4] = "OETHbDebt";
     }
 
-    function test_Simulation4A_1() public {
+    function test_Simulation4A_1_() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
@@ -213,15 +214,18 @@ contract Simulation4A is Base_Test_ {
         // Try to rebalance
         strategy.rebalance(rebalancePercentage);
 
+        strategy.withdrawAllFromPool();
+
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
         uint256 totalSupplyAfter = token0.totalSupply();
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results[0] = totalSupplyBefore;
         results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
+        results[4] = vault.oethbDebt();
 
         // Return values
         return results;
@@ -246,10 +250,10 @@ contract Simulation4B is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 10 ether;
+        values[1][0] = 5 ether;
         values[1][1] = 15 ether;
         values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 75e16;
@@ -257,11 +261,12 @@ contract Simulation4B is Base_Test_ {
         values[2][2] = 95e16;
         values[2][3] = 99e16;
 
-        outputs = new string[](4);
+        outputs = new string[](5);
         outputs[0] = "TotalSupplyBefore";
         outputs[1] = "VaultBalanceBefore";
         outputs[2] = "TotalSupplyAfter";
         outputs[3] = "VaultBalanceAfter";
+        outputs[4] = "WETHDebt";
     }
 
     function test_Simulation4B_1() public {
@@ -429,20 +434,23 @@ contract Simulation4B is Base_Test_ {
         uint256 balanceBefore = vault.checkBalance();
 
         // Buy OETHb to move a bit the price
-        _dumpOETHb(amount);
+        _sellOETHb(amount);
 
         // Try to rebalance
         strategy.rebalance(rebalancePercentage);
+
+        strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
         uint256 totalSupplyAfter = token0.totalSupply();
 
-        uint256[] memory results = new uint256[](4);
+        uint256[] memory results = new uint256[](5);
         results[0] = totalSupplyBefore;
         results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
+        results[4] = vault.wethDebt();
 
         // Return values
         return results;

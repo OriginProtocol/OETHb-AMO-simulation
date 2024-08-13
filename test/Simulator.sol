@@ -46,7 +46,7 @@ contract Simulator is Base_Test_ {
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
         console.log("Balance: %e", vault.checkBalance());
-        _dumpOETHb(10 ether);
+        _sellOETHb(10 ether);
         console.log("Balance: %e", vault.checkBalance());
         console.log("TotalSupply: %e", token0.totalSupply());
         strategy.withdrawAllFromPool();
@@ -105,7 +105,7 @@ contract Simulator is Base_Test_ {
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
         // Buy OETHb to move a bit the price
-        _dumpOETHb(10 ether);
+        _sellOETHb(10 ether);
         // Try to rebalance
         console.log("Balance: %18e", vault.checkBalance());
         (uint256 amount0, uint256 amount1) = strategy.prepareRebalance(50e16); // 99%
@@ -145,7 +145,7 @@ contract Simulator is Base_Test_ {
         // Buy OETHb to move price between tick 1 and 2
         console.log("Before swap");
         pool.slot0();
-        _dumpOETHb(25 ether);
+        _sellOETHb(25 ether);
         // Try to rebalance
         console.log("After swap");
         pool.slot0();
@@ -155,7 +155,7 @@ contract Simulator is Base_Test_ {
         console.log("Balance: %18e", vault.checkBalance());
     }*/
 /*
-    function _dumpOETHb(uint256 amount) internal {
+    function _sellOETHb(uint256 amount) internal {
         // Give user WETH
         deal(address(token1), address(this), amount);
         // User approve vault to take WETH

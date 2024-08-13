@@ -9,6 +9,7 @@ import {StrategyAMO} from "src/StrategyAMO.sol";
 contract Vault {
     uint256 public ratio;
     uint256 public oethbMintedForAMO;
+    uint256 public oethbDebt;
     uint256 public wethDebt;
 
     ERC20 public weth;
@@ -58,6 +59,7 @@ contract Vault {
     /// @notice To use when the AMO as no more OETHb when doing rebalancing.
     function mintOETHbForFree(uint256 amount) external {
         oethbMintedForAMO += amount;
+        oethbDebt += amount;
         MockERC20(address(oethb)).mint(msg.sender, amount);
     }
 

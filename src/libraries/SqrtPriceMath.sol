@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+import {SafeCastLib} from "lib/solady/src/utils/SafeCastLib.sol";
+
 library SqrtPriceMath {
     uint8 internal constant RESOLUTION = 96;
     uint256 internal constant Q96 = 0x1000000000000000000000000;
@@ -125,7 +127,8 @@ library SqrtPriceMath {
         // Factor powers of two out of denominator
         // Compute largest power of two divisor of denominator.
         // Always >= 1.
-        uint256 twos = getOneBitMask(denominator);
+        int256 signedDenominator = SafeCastLib.toInt256(denominator);
+        int256 twos = -signedDenominator & signedDenominator;
         // Divide denominator by power of two
         assembly {
             denominator := div(denominator, twos)
@@ -141,7 +144,8 @@ library SqrtPriceMath {
         assembly {
             twos := add(div(sub(0, twos), twos), 1)
         }
-        prod0 |= prod1 * twos;
+        //  prod0 |= prod1 * twos;
+        prod0 |= SafeCastLib.toUint256(SafeCastLib.toInt256(prod1) * twos);
 
         // Invert denominator mod 2**256
         // Now that denominator is an odd number, it has an inverse
@@ -167,26 +171,5 @@ library SqrtPriceMath {
         // is no longer required.
         result = prod0 * inv;
         return result;
-    }
-
-    function getOneBitMask(uint256 denominator) internal pure returns (uint256) {
-        // Use Solidity's built-in function to find the least significant bit set
-        uint256 leastSignificantBit = denominator & (~denominator + 1);
-        return leastSignificantBit;
-    }
-
-    /// @notice Cast a uint256 to a int256, revert on overflow
-    /// @param y The uint256 to be casted
-    /// @return z The casted integer, now type int256
-    function toInt256(uint256 y) internal pure returns (int256 z) {
-        require(y < 2 ** 255);
-        z = int256(y);
-    }
-
-    /// @notice Cast a int256 to a int128, revert on overflow or underflow
-    /// @param y The int256 to be downcasted
-    /// @return z The downcasted integer, now type int128
-    function toInt128(int256 y) internal pure returns (int128 z) {
-        require((z = int128(y)) == y);
     }
 }

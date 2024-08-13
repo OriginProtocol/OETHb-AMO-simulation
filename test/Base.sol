@@ -124,18 +124,18 @@ abstract contract Base_Test_ is Test {
 
     function _buyOETHb(uint256 amount) internal {
         // Give user a bit more WETH
-        deal(address(token1), address(this), amount * 101 / 100);
+        deal(address(token1), address(this), amount * 110 / 100);
         // User swap WETH for OETHb in the pool
         pool.swap({
             recipient: address(this),
             zeroForOne: false,
             amountSpecified: -int256(amount),
-            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(1),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(10_000),
             data: ""
         });
     }
 
-    function _dumpOETHb(uint256 amount) internal {
+    function _sellOETHb(uint256 amount) internal {
         // Give user WETH
         deal(address(token1), address(this), amount);
         // User approve vault to take WETH
@@ -147,7 +147,7 @@ abstract contract Base_Test_ is Test {
             recipient: address(this),
             zeroForOne: true,
             amountSpecified: int256(amount),
-            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(-1),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(-10_000),
             data: ""
         });
     }
@@ -157,6 +157,13 @@ abstract contract Base_Test_ is Test {
         internal
         returns (uint256 tokenId, uint128 liquidity, uint256 _amount0, uint256 _amount1)
     {
+        if (amount0 > 1) {
+            deal(address(token1), address(this), amount0);
+            token1.approve(address(vault), amount0);
+            vault.deposit(amount0, address(this));
+        } else if (amount1 > 1) {
+            deal(address(token1), address(this), amount1);
+        }
         return nftManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: address(token0),

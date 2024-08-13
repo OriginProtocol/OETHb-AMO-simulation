@@ -25,11 +25,11 @@ contract Simulation3A is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 10 ether;
-        values[1][1] = 20 ether;
+        values[1][0] = 50 ether;
+        values[1][1] = 95 ether;
         values[2] = new uint256[](4); // Ticks
         values[2][0] = 1;
         values[2][1] = 10;
@@ -198,13 +198,14 @@ contract Simulation3A is Base_Test_ {
         initialize(ratio);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
 
         // Check values before
         uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
-        deal(address(token1), address(this), amount);
-        _provideLiquidity(1, amount, ticks, ticks + 1);
+        _provideLiquidity(amount, 1, ticks, ticks + 1);
+        strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
@@ -239,11 +240,11 @@ contract Simulation3B is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 10 ether;
-        values[1][1] = 20 ether;
+        values[1][0] = 5 ether;
+        values[1][1] = 15 ether;
         values[2] = new uint256[](4); // Ticks
         values[2][0] = 1;
         values[2][1] = 10;
@@ -412,13 +413,14 @@ contract Simulation3B is Base_Test_ {
         initialize(ratio);
         deal(address(token1), address(this), 20 ether);
         vault.deposit(20 ether, address(this));
+        strategy.depositInPool(20 ether);
 
         // Check values before
         uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
-        deal(address(token1), address(this), amount);
         _provideLiquidity(1, amount, -ticks - 1, -ticks);
+        strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();

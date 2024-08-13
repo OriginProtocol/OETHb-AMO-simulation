@@ -25,26 +25,26 @@ contract Simulation5A is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 70 ether; // Less than initial liquidity deposited
-        values[1][1] = 90 ether; // More than initial liquidity deposited
+        values[1][0] = 50 ether; // Less than initial liquidity deposited
+        values[1][1] = 95 ether; // More than initial liquidity deposited
         values[2] = new uint256[](4); // Ticks %
         values[2][0] = 1;
         values[2][1] = 10;
-        values[2][2] = 1_000;
-        values[2][3] = 10_000;
+        values[2][2] = 100;
+        values[2][3] = 1_000;
 
         outputs = new string[](5);
         outputs[0] = "TotalSupplyBefore";
         outputs[1] = "VaultBalanceBefore";
         outputs[2] = "TotalSupplyAfter";
         outputs[3] = "VaultBalanceAfter";
-        outputs[4] = "WETHDebt";
+        outputs[4] = "OETHbDebt";
     }
 
-    function test_Simulation5A_1() public {
+    function test_Simulation5A_1_() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
@@ -206,14 +206,14 @@ contract Simulation5A is Base_Test_ {
         uint256 balanceBefore = vault.checkBalance();
 
         // Provide Liquiditity outside of current ticks
-        deal(address(token1), address(this), 10 ether);
-        _provideLiquidity(1, 10 ether, ticks, ticks + 1);
+        _provideLiquidity(40 ether, 1, ticks, ticks + 1);
 
         // Try to push price in new ticks
         _buyOETHb(amount);
 
         // Try to rebalance
         strategy.rebalance(99e16);
+        strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
@@ -224,7 +224,7 @@ contract Simulation5A is Base_Test_ {
         results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
-        results[4] = vault.wethDebt();
+        results[4] = vault.oethbDebt();
 
         // Return values
         return results;
@@ -249,14 +249,14 @@ contract Simulation5B is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 15 ether; // Less than initial liquidity deposited
-        values[1][1] = 25 ether; // More than initial liquidity deposited
+        values[1][0] = 5 ether; // Less than initial liquidity deposited
+        values[1][1] = 15 ether; // More than initial liquidity deposited
         values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 1;
-        values[2][1] = 10;
+        values[2][1] = 100;
         values[2][2] = 1_000;
         values[2][3] = 10_000;
 
@@ -430,11 +430,10 @@ contract Simulation5B is Base_Test_ {
         uint256 balanceBefore = vault.checkBalance();
 
         // Provide Liquiditity outside of current ticks
-        deal(address(token1), address(this), 10 ether);
         _provideLiquidity(1, 10 ether, -ticks - 1, -ticks);
 
         // Try to push price in new ticks
-        _dumpOETHb(amount);
+        _sellOETHb(amount);
 
         // Try to rebalance
         strategy.rebalance(99e16);

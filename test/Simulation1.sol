@@ -24,8 +24,8 @@ contract Simulation1 is Base_Test_ {
 
         values = new uint256[][](2);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
         values[1] = new uint256[](2); // Amounts
         values[1][0] = 10 ether;
         values[1][1] = 20 ether;

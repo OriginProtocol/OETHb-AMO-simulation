@@ -24,12 +24,11 @@ contract Simulation2A is Base_Test_ {
 
         values = new uint256[][](2);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
-        values[1] = new uint256[](3); // Amounts
-        values[1][0] = 5 ether;
-        values[1][1] = 15 ether;
-        values[1][2] = 25 ether;
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
+        values[1] = new uint256[](2); // Amounts
+        values[1][0] = 50 ether;
+        values[1][1] = 95 ether;
 
         outputs = new string[](4);
         outputs[0] = "TotalSupplyBefore";
@@ -56,8 +55,8 @@ contract Simulation2A is Base_Test_ {
 
     function test_Simulation2A_3() public {
         uint256[] memory location = new uint256[](2);
-        location[0] = values[0][0]; // Ratios
-        location[1] = values[1][2]; // Amounts
+        location[0] = values[0][1]; // Ratios
+        location[1] = values[1][0]; // Amounts
 
         _simulate(location);
     }
@@ -65,23 +64,7 @@ contract Simulation2A is Base_Test_ {
     function test_Simulation2A_4() public {
         uint256[] memory location = new uint256[](2);
         location[0] = values[0][1]; // Ratios
-        location[1] = values[1][0]; // Amounts
-
-        _simulate(location);
-    }
-
-    function test_Simulation2A_5() public {
-        uint256[] memory location = new uint256[](2);
-        location[0] = values[0][1]; // Ratios
         location[1] = values[1][1]; // Amounts
-
-        _simulate(location);
-    }
-
-    function test_Simulation2A_6() public {
-        uint256[] memory location = new uint256[](2);
-        location[0] = values[0][1]; // Ratios
-        location[1] = values[1][2]; // Amounts
 
         _simulate(location);
     }
@@ -138,12 +121,11 @@ contract Simulation2B is Base_Test_ {
 
         values = new uint256[][](2);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 8e17;
-        values[0][1] = 9e17;
-        values[1] = new uint256[](3); // Amounts
+        values[0][0] = 80e16;
+        values[0][1] = 82e16;
+        values[1] = new uint256[](2); // Amounts
         values[1][0] = 5 ether;
         values[1][1] = 15 ether;
-        values[1][2] = 25 ether;
 
         outputs = new string[](4);
         outputs[0] = "TotalSupplyBefore";
@@ -170,8 +152,8 @@ contract Simulation2B is Base_Test_ {
 
     function test_Simulation2B_3() public {
         uint256[] memory location = new uint256[](2);
-        location[0] = values[0][0]; // Ratios
-        location[1] = values[1][2]; // Amounts
+        location[0] = values[0][1]; // Ratios
+        location[1] = values[1][0]; // Amounts
 
         _simulate(location);
     }
@@ -179,23 +161,7 @@ contract Simulation2B is Base_Test_ {
     function test_Simulation2B_4() public {
         uint256[] memory location = new uint256[](2);
         location[0] = values[0][1]; // Ratios
-        location[1] = values[1][0]; // Amounts
-
-        _simulate(location);
-    }
-
-    function test_Simulation2B_5() public {
-        uint256[] memory location = new uint256[](2);
-        location[0] = values[0][1]; // Ratios
         location[1] = values[1][1]; // Amounts
-
-        _simulate(location);
-    }
-
-    function test_Simulation2B_6() public {
-        uint256[] memory location = new uint256[](2);
-        location[0] = values[0][1]; // Ratios
-        location[1] = values[1][2]; // Amounts
 
         _simulate(location);
     }
@@ -217,7 +183,7 @@ contract Simulation2B is Base_Test_ {
         uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
-        _dumpOETHb(amount);
+        _sellOETHb(amount);
         strategy.withdrawAllFromPool();
 
         // Check values after
