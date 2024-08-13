@@ -42,10 +42,7 @@ contract Simulation1 is Base_Test_ {
         location[0] = values[0][0]; // Ratios
         location[1] = values[1][0]; // Amounts
 
-        uint256[] memory results = new uint256[](4);
-        results = _simulation(location[0], location[1]);
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
     function test_Simulation1_2() public {
@@ -53,10 +50,7 @@ contract Simulation1 is Base_Test_ {
         location[0] = values[0][0]; // Ratios
         location[1] = values[1][1]; // Amounts
 
-        uint256[] memory results = new uint256[](4);
-        results = _simulation(location[0], location[1]);
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
     function test_Simulation1_3() public {
@@ -64,10 +58,7 @@ contract Simulation1 is Base_Test_ {
         location[0] = values[0][1]; // Ratios
         location[1] = values[1][0]; // Amounts
 
-        uint256[] memory results = new uint256[](4);
-        results = _simulation(location[0], location[1]);
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
     function test_Simulation1_4() public {
@@ -75,10 +66,14 @@ contract Simulation1 is Base_Test_ {
         location[0] = values[0][1]; // Ratios
         location[1] = values[1][1]; // Amounts
 
-        uint256[] memory results = new uint256[](4);
-        results = _simulation(location[0], location[1]);
+        _simulate(location);
+    }
 
-        name.exportSimulation1(inputs, values, location, outputs, results);
+    function _simulate(uint256[] memory params) public {
+        uint256[] memory results = new uint256[](4);
+        results = _simulation(params[0], params[1]);
+
+        name.exportSimulation1(inputs, values, params, outputs, results);
     }
 
     function _simulation(uint256 ratio, uint256 amount) internal returns (uint256[] memory) {

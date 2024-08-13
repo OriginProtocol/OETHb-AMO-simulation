@@ -30,7 +30,7 @@ contract Simulation5A is Base_Test_ {
         values[1] = new uint256[](2); // Amounts
         values[1][0] = 70 ether; // Less than initial liquidity deposited
         values[1][1] = 90 ether; // More than initial liquidity deposited
-        values[2] = new uint256[](4); // Rebalance %
+        values[2] = new uint256[](4); // Ticks %
         values[2][0] = 1;
         values[2][1] = 10;
         values[2][2] = 1_000;
@@ -44,196 +44,155 @@ contract Simulation5A is Base_Test_ {
         outputs[4] = "WETHDebt";
     }
 
-    function test_Simulation3_1() public {
+    function test_Simulation5A_1() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_2() public {
+    function test_Simulation5A_2() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_3() public {
+    function test_Simulation5A_3() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_4() public {
+    function test_Simulation5A_4() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_5() public {
+    function test_Simulation5A_5() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_6() public {
+    function test_Simulation5A_6() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_7() public {
+    function test_Simulation5A_7() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_8() public {
+    function test_Simulation5A_8() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_9() public {
+    function test_Simulation5A_9() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_10() public {
+    function test_Simulation5A_10() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_11() public {
+    function test_Simulation5A_11() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_12() public {
+    function test_Simulation5A_12() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_13() public {
+    function test_Simulation5A_13() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_14() public {
+    function test_Simulation5A_14() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_15() public {
+    function test_Simulation5A_15() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_16() public {
+    function test_Simulation5A_16() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
+        _simulate(location);
+    }
 
-        name.exportSimulation1(inputs, values, location, outputs, results);
+    function _simulate(uint256[] memory params) public {
+        uint256[] memory results = new uint256[](4);
+        results = _simulation(params[0], params[1], int24(int256(params[2])));
+
+        name.exportSimulation1(inputs, values, params, outputs, results);
     }
 
     function _simulation(uint256 ratio, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
@@ -309,196 +268,155 @@ contract Simulation5B is Base_Test_ {
         outputs[4] = "WETHDebt";
     }
 
-    function test_Simulation3_1() public {
+    function test_Simulation5B_1() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_2() public {
+    function test_Simulation5B_2() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_3() public {
+    function test_Simulation5B_3() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_4() public {
+    function test_Simulation5B_4() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_5() public {
+    function test_Simulation5B_5() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_6() public {
+    function test_Simulation5B_6() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_7() public {
+    function test_Simulation5B_7() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_8() public {
+    function test_Simulation5B_8() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_9() public {
+    function test_Simulation5B_9() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_10() public {
+    function test_Simulation5B_10() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_11() public {
+    function test_Simulation5B_11() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_12() public {
+    function test_Simulation5B_12() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][0];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_13() public {
+    function test_Simulation5B_13() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][0];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_14() public {
+    function test_Simulation5B_14() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][1];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_15() public {
+    function test_Simulation5B_15() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][2];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
-
-        name.exportSimulation1(inputs, values, location, outputs, results);
+        _simulate(location);
     }
 
-    function test_Simulation3_16() public {
+    function test_Simulation5B_16() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][1];
         location[1] = values[1][1];
         location[2] = values[2][3];
 
-        uint256[] memory results = new uint256[](5);
-        results = _simulation(location[0], location[1], int24(int256(location[2]))); // Add SafeCast
+        _simulate(location);
+    }
 
-        name.exportSimulation1(inputs, values, location, outputs, results);
+    function _simulate(uint256[] memory params) public {
+        uint256[] memory results = new uint256[](4);
+        results = _simulation(params[0], params[1], int24(int256(params[2])));
+
+        name.exportSimulation1(inputs, values, params, outputs, results);
     }
 
     function _simulation(uint256 ratio, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
