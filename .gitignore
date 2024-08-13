@@ -10,6 +10,7 @@ data/
 venv
 reqirements.txt
 script/graphs
+.DS_Store
 # Docs
 docs/
 

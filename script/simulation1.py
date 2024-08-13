@@ -1,62 +1,55 @@
 import json
+import os
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
-# Load the JSON data
-with open('data/Simulation1.json', 'r') as file:
+# Load JSON data from file
+with open("data/Simulation1.json", "r") as file:
     data = json.load(file)
 
-# Extract the relevant data
-ratios = [int(ratio) / 1e18 for ratio in data['inputs']['Ratio']]
-amounts = [int(amount) / 1e18 for amount in data['inputs']['Amount']]
+# Extract inputs and outputs
+inputs = data["inputs"]
+outputs = data["outputs"]
 
-# Function to format large numbers
-def format_large_number(n):
-    return f"{n:.2f}"
+# Create a figure with 3 subplots
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
-# Create the graph
-fig, ax = plt.subplots(figsize=(14, 8))  # Increased figure width
+# Add a big title for the whole image
+fig.suptitle("Simulation 1 Results", fontsize=16, fontweight="bold")
 
-colors = ['blue', 'red', 'green']  # Colors for different amounts
-markers = ['o', 's', '^']  # Markers for different amounts
-linestyles = ['-', '--']  # Line styles for TotalSupply and VaultBalance
-
-for idx, amount in enumerate(amounts):
-    total_supply_values = [float(data['outputs']['TotalSupplyAfter'][str(int(ratio*1e18))][str(int(amount*1e18))])/1e18 for ratio in ratios]
-    vault_balance_values = [float(data['outputs']['VaultBalanceAfter'][str(int(ratio*1e18))][str(int(amount*1e18))])/1e18 for ratio in ratios]
+# Iterate over each amount
+for i, amount in enumerate(inputs["Amount"]):
+    amount_str = str(amount)
     
-    # Plot real values
-    ax.plot(ratios, total_supply_values, color=colors[idx], linestyle=linestyles[0], 
-            label=f'TotalSupply (Amount: {format_large_number(amount)})', marker=markers[idx], markersize=6)
-    ax.plot(ratios, vault_balance_values, color=colors[idx], linestyle=linestyles[1], 
-            label=f'VaultBalance (Amount: {format_large_number(amount)})', marker=markers[idx], markersize=6)
+    # Calculate the difference between total value difference and vault balance difference
+    diff = [(outputs["TotalSupplyAfter"][str(ratio)][amount_str] - outputs["TotalSupplyBefore"][str(ratio)][amount_str]) - 
+            (outputs["VaultBalanceAfter"][str(ratio)][amount_str] - outputs["VaultBalanceBefore"][str(ratio)][amount_str])
+            for ratio in inputs["Ratio"]]
     
-    # Calculate relative difference
-    diff_values = np.array(vault_balance_values) - np.array(total_supply_values)
-    relative_diff = diff_values / np.array(total_supply_values)
+    # Plot the difference with marked simulation points
+    axes[i].plot(inputs["Ratio"], diff, label="Difference", marker="o")
+    axes[i].set_title(f"Amount: {amount / 1e18:.2f} * 1e18")
+    axes[i].set_xlabel("Ratio")
+    axes[i].set_ylabel("Difference")
+    axes[i].set_ylim(-1e18, 1e18)  # Set y-axis limits
+    axes[i].grid(True, which="both", linestyle="--", alpha=0.7)  # Add grid
+    axes[i].ticklabel_format(style="sci", scilimits=(0, 0), axis="both")  # Set scientific notation for tick labels
     
-    # Add text to show maximum relative difference
-    max_rel_diff = np.max(relative_diff)
-    ax.text(0.02, 0.98 - 0.05*idx, f'Max Relative Difference ({format_large_number(amount)}): {max_rel_diff:.2e}', 
-            transform=ax.transAxes, verticalalignment='top', color=colors[idx], fontsize=8)
+    # Set custom x-axis tick locations and labels
+    x_ticks = np.array([8, 8.050, 8.100, 8.150, 8.200]) * 1e17
+    axes[i].set_xticks(x_ticks)
+    axes[i].set_xticklabels([f"{tick / 1e17:.3f}" for tick in x_ticks])
+    
+    axes[i].legend()
 
-ax.set_xlabel('Ratio')
-ax.set_ylabel('Amount')
-ax.set_ylim(0, 60)  # Set y-axis limit from 0 to 60
-ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=8)
-ax.grid(True, which='both', linestyle='--', alpha=0.7)
-ax.set_title('VaultBalance vs TotalSupply for Different Amounts and Ratios')
+# Adjust spacing between subplots and the big title
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-# Adjust the layout
-plt.tight_layout()
-plt.subplots_adjust(right=0.80)  # Increased right margin for legend
+# Create the "data/graphs" folder if it doesn't exist
+os.makedirs("data/graphs", exist_ok=True)
 
-# Create the directory if it doesn't exist
-os.makedirs('script/graphs', exist_ok=True)
+# Save the graph as an image file with the name "Simulation1.png"
+plt.savefig("data/graphs/Simulation1.png", dpi=300)  # Increase DPI for better image quality
 
-# Save the figure
-plt.savefig('script/graphs/Simulation1.png', dpi=300, bbox_inches='tight')
-plt.close()
-
-print("Generated graph 'Simulation1.png' in the 'script/graphs' folder.")
+# Display the graph
+plt.show()
