@@ -69,15 +69,20 @@ contract StrategyAMO is ActionsAMO {
         uint256 amount0Delta;
         uint256 amount1Delta;
         if (currentSqrtPriceX96 > targetSqrtRatioBX96) {
-            // Need to sell token1 and buy token0
+            // emit log_named_uint("Current price is higher than target price", uint256(currentSqrtPriceX96));
+            // emit log_named_uint("Target price", uint256(targetSqrtRatioBX96));
+            // Need to swap token0 for token1, to push the price down
+            // So we calculate the amount of token0 to sell
             amount0Delta =
-                SqrtPriceMath.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, false);
-            emit log_named_uint("amount1Delta", amount0Delta);
+                SqrtPriceMath.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, true);
+            //emit log_named_uint("amount0Delta", amount0Delta);
         } else if (currentSqrtPriceX96 < targetSqrtRatioBX96) {
+            // emit log_named_uint("Current price is lower than target price", uint256(currentSqrtPriceX96));
+            // emit log_named_uint("Target price", uint256(targetSqrtRatioBX96));
             // Need to sell token0 and buy token1
             amount1Delta =
-                SqrtPriceMath.getAmount0Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, false);
-            emit log_named_uint("amount0Delta", amount1Delta);
+                SqrtPriceMath.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, true);
+            //emit log_named_uint("amount1Delta", amount1Delta);
         }
 
         return (amount0Delta, amount1Delta);
@@ -114,11 +119,11 @@ contract StrategyAMO is ActionsAMO {
 
             _swap(address(token1), amount1);
         }
-        (uint160 currentSqrtPriceX96,,,,,) = pool.slot0();
-        uint256 diff = currentSqrtPriceX96 > targetPrice
-            ? uint256(currentSqrtPriceX96 - uint160(targetPrice))
-            : uint256(uint160(targetPrice) - currentSqrtPriceX96);
-        emit log_named_uint("Diff between targeted price and current price: ", diff);
+        //(uint160 currentSqrtPriceX96,,,,,) = pool.slot0();
+        //uint256 diff = currentSqrtPriceX96 > targetPrice
+        //    ? uint256(currentSqrtPriceX96 - uint160(targetPrice))
+        //    : uint256(uint160(targetPrice) - currentSqrtPriceX96);
+        //emit log_named_uint("Diff between targeted price and current price in %: ", diff * 1e18 / uint256(targetPrice));
 
         // Second add liquidity to pool
         _increaseLiquidity(token0.balanceOf(address(this)), token1.balanceOf(address(this)));
@@ -129,7 +134,7 @@ contract StrategyAMO is ActionsAMO {
         finalizeRebalance(amount0, amount1);
     }
 
-    function _getLiquidityBetweenTicks(int24 lowerTick, int24 upperTick) internal returns (uint128) {
+    function _getLiquidityBetweenTicks(int24 lowerTick, int24 upperTick) internal view returns (uint128) {
         uint128 liquidity;
         if (lowerTick > upperTick) {
             (lowerTick, upperTick) = (upperTick, lowerTick);
@@ -138,7 +143,7 @@ contract StrategyAMO is ActionsAMO {
             (uint128 liquidityGross,,,,,,,,,) = pool.ticks(tick);
             liquidity += liquidityGross;
         }
-        emit log_named_uint("Liquidity between ticks: ", liquidity);
+        //emit log_named_uint("Liquidity between ticks: ", liquidity);
         return liquidity;
     }
 
