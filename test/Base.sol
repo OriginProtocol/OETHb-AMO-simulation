@@ -40,7 +40,6 @@ abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     ERC20 public token0; // OETHb
     ERC20 public token1; // WETH
-    ERC20 public rewardToken;
     Vault public vault;
     StrategyAMO public strategy;
 
@@ -58,11 +57,9 @@ abstract contract Base_Test_ is Test {
         vm.createSelectFork("base", 17906760);
 
         // 2. Create Tokens
-        token1 = ERC20(new MockERC20("Wrapped ETH", "WETH", 18));
-        token0 = ERC20(new MockERC20("Origin ETH Base", "OETHb", 18));
-        rewardToken = ERC20(new MockERC20("Reward Token", "RT", 18));
+        token0 = ERC20(Base.WETH);
+        token1 = ERC20(Base.OETHB);
         require(address(token0) < address(token1), "Token0 must be less than Token1");
-        // Note: if previous require fails, swap deployment order between token0 and token1.
 
         // 3. Whitelist token0 and token1 in Voter: Not needed anymore
         vm.startPrank(Base.GOV_VOTER);
