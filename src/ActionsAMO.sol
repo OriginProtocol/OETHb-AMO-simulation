@@ -12,33 +12,33 @@ contract ActionsAMO {
     int24 public immutable DEFAULT_LOWER_TICK;
     int24 public immutable DEFAULT_UPPER_TICK;
 
-    ERC20 public token0;
-    ERC20 public token1;
+    ERC20 public weth;
+    ERC20 public oethb;
     ICLPool public pool;
     INonfungiblePositionManager public nftManager;
 
     uint256 public tokenId;
 
-    constructor(INonfungiblePositionManager _nftManager, ICLPool _pool, ERC20 _token0, ERC20 _token1) {
+    constructor(INonfungiblePositionManager _nftManager, ICLPool _pool, ERC20 _weth, ERC20 _oethb) {
         DEFAULT_TICK_SPACING = 1;
         DEFAULT_LOWER_TICK = 0;
         DEFAULT_UPPER_TICK = 1;
 
         pool = _pool;
-        token0 = _token0;
-        token1 = _token1;
+        weth = _weth;
+        oethb = _oethb;
         nftManager = _nftManager;
 
         // Approvals
-        token0.approve(address(nftManager), type(uint256).max);
-        token1.approve(address(nftManager), type(uint256).max);
+        weth.approve(address(nftManager), type(uint256).max);
+        oethb.approve(address(nftManager), type(uint256).max);
     }
 
     function _addIinitialLiquidity(uint256 amount0, uint256 amount1) internal returns (uint256, uint128) {
         (uint256 tokenId_, uint128 liquidity_,,) = nftManager.mint(
             INonfungiblePositionManager.MintParams({
-                token0: address(token0),
-                token1: address(token1),
+                token0: address(weth),
+                token1: address(oethb),
                 tickSpacing: DEFAULT_TICK_SPACING,
                 tickLower: DEFAULT_LOWER_TICK,
                 tickUpper: DEFAULT_UPPER_TICK,
@@ -95,7 +95,7 @@ contract ActionsAMO {
     }
 
     function _swap(address tokenIn, uint256 amountIn) internal {
-        bool zeroForOne = tokenIn == address(token0);
+        bool zeroForOne = tokenIn == address(weth);
         int256 amountSpecified = zeroForOne ? int256(amountIn) : -int256(amountIn);
         uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.getSqrtRatioAtTick(-1) : TickMath.getSqrtRatioAtTick(100);
 
@@ -110,15 +110,15 @@ contract ActionsAMO {
     }
 
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        if (amount0Delta > 0) token0.transfer(address(pool), uint256(amount0Delta));
-        else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
+        if (amount0Delta > 0) weth.transfer(address(pool), uint256(amount0Delta));
+        else if (amount1Delta > 0) oethb.transfer(address(pool), uint256(amount1Delta));
     }
 
     function _mintOETHb(uint256 amount, address receiver) internal {
-        MockERC20(address(token0)).mint(receiver, amount);
+        MockERC20(address(weth)).mint(receiver, amount);
     }
 
     function _burnOETHb(uint256 amount, address receiver) internal {
-        MockERC20(address(token0)).burn(receiver, amount);
+        MockERC20(address(weth)).burn(receiver, amount);
     }
 }

@@ -16,7 +16,7 @@ contract Vault {
     ERC20 public oethb;
     StrategyAMO public strategy;
 
-    constructor(ERC20 _oeth, ERC20 _weth, uint256 _ratio, StrategyAMO _strategy) {
+    constructor(ERC20 _weth, ERC20 _oeth, uint256 _ratio, StrategyAMO _strategy) {
         oethb = _oeth;
         weth = _weth;
         ratio = _ratio;
@@ -28,6 +28,8 @@ contract Vault {
     }
 
     function deposit(uint256 amount, address receiver) external {
+        weth.symbol();
+        weth.balanceOf(msg.sender);
         weth.transferFrom(msg.sender, address(this), amount);
         MockERC20(address(oethb)).mint(receiver, amount);
     }
@@ -37,23 +39,25 @@ contract Vault {
         weth.transfer(from, amount);
     }
 
-    function depositInStrategy(uint256 amount) external returns (uint256, uint256) {
-        require(msg.sender == address(strategy), "Vault: Only strategy");
-        weth.transfer(address(strategy), amount);
-        uint256 amountOETHb = (amount * ratio) / (1e18 - ratio);
-        MockERC20(address(oethb)).mint(address(strategy), amountOETHb);
-        oethbMintedForAMO += amountOETHb;
+    event log_named_uint(string name, uint256 value);
 
-        return (amount, amountOETHb);
+    function depositInStrategy(uint256 amountWETH) external returns (uint256, uint256) {
+        require(msg.sender == address(strategy), "Vault: Only strategy");
+        emit log_named_uint("Ratio", ratio);
+        uint256 amountOETHb = amountWETH * ratio / 1e9;
+
+        weth.transfer(address(strategy), amountWETH);
+        MockERC20(address(oethb)).mint(address(strategy), amountOETHb);
+
+        return (amountWETH, amountOETHb);
     }
 
     function withdrawFromStrategy(uint256 amountOETHb, uint256 amountWETH) external {
         require(msg.sender == address(strategy), "Vault: Only strategy");
-        uint256 ratioAmountWETH = (1e18 - ratio) * amountOETHb / ratio;
-        uint256 ratioAmountOETHb = ratio * amountWETH / (1e18 - ratio);
-        MockERC20(address(oethb)).burn(address(strategy), min(amountOETHb, ratioAmountOETHb));
-        oethbMintedForAMO -= min(amountOETHb, ratioAmountOETHb);
-        weth.transferFrom(address(strategy), address(this), min(amountWETH, ratioAmountWETH));
+        MockERC20(address(oethb)).burn(address(strategy), amountOETHb);
+        weth.transferFrom(address(strategy), address(this), amountWETH);
+        require(weth.balanceOf(address(strategy)) == 0, "Vault: WETH balance not 0");
+        require(oethb.balanceOf(address(strategy)) == 0, "Vault: OETHb balance not 0");
     }
 
     /// @notice To use when the AMO as no more OETHb when doing rebalancing.

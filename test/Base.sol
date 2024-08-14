@@ -30,6 +30,8 @@ abstract contract Base_Test_ is Test {
     int24 public constant LOWER_TICK = 0;
     int24 public constant UPPER_TICK = 1;
     int24 public constant TICK_SPACING = 1;
+    int24 public constant DEFAULT_MAX_TICK = 1_000;
+    uint256 public constant DEFAULT_LIQUIDITY_DEPOSIT = 10 ether;
 
     ERC20 public immutable AERO = ERC20(Base.AERO);
     IVoter public immutable voter = IVoter(Base.VOTER);
@@ -38,8 +40,8 @@ abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     /// --- CONTRACTS & INTERFACES
     ////////////////////////////////////////////////////////////////
-    ERC20 public token0; // OETHb
-    ERC20 public token1; // WETH
+    ERC20 public weth;
+    ERC20 public oethb; // WETH
     Vault public vault;
     StrategyAMO public strategy;
 
@@ -54,17 +56,19 @@ abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     function setUp() public virtual {
         // 1. Create fork
-        vm.createSelectFork("base", 17906760);
+        vm.createSelectFork("base", 18000000);
 
         // 2. Create Tokens
-        token0 = ERC20(Base.WETH);
-        token1 = ERC20(Base.OETHB);
-        require(address(token0) < address(token1), "Token0 must be less than Token1");
+        weth = ERC20(Base.WETH);
+        oethb = ERC20(Base.OETHB);
+        require(address(weth) < address(oethb), "Token0 must be less than Token1");
+        MockERC20 impl = new MockERC20("Origin ETH Base", "OETHb", 18);
+        vm.etch(address(oethb), address(impl).code);
 
         // 3. Whitelist token0 and token1 in Voter: Not needed anymore
         vm.startPrank(Base.GOV_VOTER);
-        voter.whitelistToken(address(token0), true);
-        voter.whitelistToken(address(token1), true);
+        voter.whitelistToken(address(weth), true);
+        voter.whitelistToken(address(oethb), true);
         vm.stopPrank();
 
         path = string(abi.encodePacked(vm.projectRoot(), "/data/"));
@@ -77,8 +81,8 @@ abstract contract Base_Test_ is Test {
         // 1. Create Pool
         pool = ICLPool(
             poolFactory.createPool({
-                tokenA: address(token0),
-                tokenB: address(token1),
+                tokenA: address(weth),
+                tokenB: address(oethb),
                 tickSpacing: TICK_SPACING,
                 sqrtPriceX96: getInitialPriceWithRatio(ratio)
             })
@@ -89,62 +93,71 @@ abstract contract Base_Test_ is Test {
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
 
         // Deploy StrategyAMO and Vault
-        strategy = new StrategyAMO(nftManager, pool, token0, token1, ratio);
-        vault = new Vault(token0, token1, ratio, strategy);
+        strategy = new StrategyAMO(nftManager, pool, weth, oethb, ratio);
+        vault = new Vault(weth, oethb, ratio, strategy);
         strategy.setVault(vault);
 
         // Approvals
-        token0.approve(address(nftManager), type(uint256).max);
-        token1.approve(address(nftManager), type(uint256).max);
-        token1.approve(address(vault), type(uint256).max);
+        weth.approve(address(nftManager), type(uint256).max);
+        oethb.approve(address(nftManager), type(uint256).max);
+        weth.approve(address(vault), type(uint256).max);
+        oethb.approve(address(vault), type(uint256).max);
         nftManager.setApprovalForAll(address(gauge), true);
 
         // Label
-        vm.label(address(token1), "WETH");
-        vm.label(address(token0), "OETHb");
+        vm.label(address(weth), "WETH");
+        vm.label(address(oethb), "OETHb");
         vm.label(address(strategy), "StrategyAMO");
         vm.label(address(nftManager), "NFTManager");
         vm.label(address(pool), "CLPool OETHb/WETH");
         vm.label(address(gauge), "CLGauge OETHb/WETH");
+        vm.label(Base.SUGAR_HELPER, "SugarHelper");
     }
 
     function getInitialPriceWithRatio(uint256 ratio) public pure returns (uint160) {
-        return (
-            TickMath.getSqrtRatioAtTick(0) * uint160(ratio) + TickMath.getSqrtRatioAtTick(1) * uint160(1e18 - ratio)
-        ) / 1e18;
+        return (TickMath.getSqrtRatioAtTick(0) * 1e9 + TickMath.getSqrtRatioAtTick(1) * uint160(ratio))
+            / uint160(1e9 + ratio);
     }
 
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        if (amount0Delta > 0) token0.transfer(address(pool), uint256(amount0Delta));
-        else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
+        if (amount0Delta > 0) weth.transfer(address(pool), uint256(amount0Delta));
+        else if (amount1Delta > 0) oethb.transfer(address(pool), uint256(amount1Delta));
     }
 
     function _buyOETHb(uint256 amount) internal {
+        _buyOETHb(amount, -DEFAULT_MAX_TICK);
+    }
+
+    function _buyOETHb(uint256 amount, int24 maxTick) internal {
         // Give user a bit more WETH
-        deal(address(token1), address(this), amount * 110 / 100);
+        deal(address(weth), address(this), amount * 110 / 100);
         // User swap WETH for OETHb in the pool
         pool.swap({
             recipient: address(this),
-            zeroForOne: false,
-            amountSpecified: -int256(amount),
-            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(10_000),
+            zeroForOne: true,
+            amountSpecified: int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(maxTick),
             data: ""
         });
     }
 
     function _sellOETHb(uint256 amount) internal {
+        _sellOETHb(amount, DEFAULT_MAX_TICK);
+    }
+
+    function _sellOETHb(uint256 amount, int24 maxTick) internal {
         // Give user WETH
-        deal(address(token1), address(this), amount);
+        deal(address(weth), address(this), amount);
         // User approve vault to take WETH
-        token1.approve(address(vault), amount);
+        weth.approve(address(vault), amount);
         // User mint OETHb against WETH
         vault.deposit(amount, address(this));
         // User swap OETHb for WETH in the pool
         pool.swap({
             recipient: address(this),
-            zeroForOne: true,
-            amountSpecified: int256(amount),
-            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(-10_000),
+            zeroForOne: false,
+            amountSpecified: -int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(maxTick),
             data: ""
         });
     }
@@ -155,16 +168,15 @@ abstract contract Base_Test_ is Test {
         returns (uint256 tokenId, uint128 liquidity, uint256 _amount0, uint256 _amount1)
     {
         if (amount0 > 1) {
-            deal(address(token1), address(this), amount0);
-            token1.approve(address(vault), amount0);
-            vault.deposit(amount0, address(this));
+            deal(address(weth), address(this), amount0);
         } else if (amount1 > 1) {
-            deal(address(token1), address(this), amount1);
+            deal(address(weth), address(this), amount1);
+            vault.deposit(amount1, address(this));
         }
         return nftManager.mint(
             INonfungiblePositionManager.MintParams({
-                token0: address(token0),
-                token1: address(token1),
+                token0: address(weth),
+                token1: address(oethb),
                 tickSpacing: 1,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
