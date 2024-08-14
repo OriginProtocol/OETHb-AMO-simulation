@@ -95,9 +95,29 @@ contract ActionsAMO {
     }
 
     function _swap(address tokenIn, uint256 amountIn) internal {
+        _swap(tokenIn, amountIn, int24(100));
+    }
+
+    function _swap(address tokenIn, uint256 amountIn, int24 maxTick) internal {
         bool zeroForOne = tokenIn == address(weth);
         int256 amountSpecified = zeroForOne ? int256(amountIn) : -int256(amountIn);
-        uint160 sqrtPriceLimitX96 = zeroForOne ? TickMath.getSqrtRatioAtTick(-1) : TickMath.getSqrtRatioAtTick(100);
+        uint160 sqrtPriceLimitX96 =
+            zeroForOne ? TickMath.getSqrtRatioAtTick(-maxTick) : TickMath.getSqrtRatioAtTick(maxTick);
+
+        // Swap
+        pool.swap({
+            recipient: address(this),
+            zeroForOne: zeroForOne,
+            amountSpecified: amountSpecified,
+            sqrtPriceLimitX96: sqrtPriceLimitX96,
+            data: ""
+        });
+    }
+
+    function _swap(address tokenIn, uint256 amountIn, uint160 sqrtPrice) internal {
+        bool zeroForOne = tokenIn == address(weth);
+        int256 amountSpecified = zeroForOne ? int256(amountIn) : -int256(amountIn);
+        uint160 sqrtPriceLimitX96 = sqrtPrice;
 
         // Swap
         pool.swap({

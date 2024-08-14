@@ -58,92 +58,8 @@ contract StrategyAMO is ActionsAMO {
 
     event log_named_uint(string name, uint256 value);
 
-    function prepareRebalance(uint256 percentage) public returns (uint256, uint256) {
-        // First remove liquidity from pool
-        (,,,,,,, uint128 liquidity,,,,) = nftManager.positions(tokenId);
-        uint128 adjustedLiquidity = SafeCastLib.toUint128(liquidity * percentage / 1e18);
-        _decreaseLiquidity(adjustedLiquidity);
-
-        // Push price
-        (uint160 currentSqrtPriceX96, int24 currentTick,,,,) = pool.slot0();
-        uint160 targetSqrtRatioBX96 = defaultTargetPrice;
-
-        targetPrice = targetSqrtRatioBX96;
-        //uint128 liquidityInPool = pool.liquidity();
-        uint128 liquidityInTicks =
-            _getLiquidityBetweenTicks(currentTick, TickMath.getTickAtSqrtRatio(targetSqrtRatioBX96));
-
-        uint256 amount0Delta;
-        uint256 amount1Delta;
-        if (currentSqrtPriceX96 > targetSqrtRatioBX96) {
-            // emit log_named_uint("Current price is higher than target price", uint256(currentSqrtPriceX96));
-            // emit log_named_uint("Target price", uint256(targetSqrtRatioBX96));
-            // Need to swap weth for oethb, to push the price down
-            // So we calculate the amount of weth to sell
-            amount0Delta =
-                SqrtPriceMath.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, true);
-            //emit log_named_uint("amount0Delta", amount0Delta);
-        } else if (currentSqrtPriceX96 < targetSqrtRatioBX96) {
-            // emit log_named_uint("Current price is lower than target price", uint256(currentSqrtPriceX96));
-            // emit log_named_uint("Target price", uint256(targetSqrtRatioBX96));
-            // Need to sell weth and buy oethb
-            amount1Delta =
-                SqrtPriceMath.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, true);
-            //emit log_named_uint("amount1Delta", amount1Delta);
-        }
-
-        return (amount0Delta, amount1Delta);
-        // Third add liquidity to pool:
-    }
-
-    function finalizeRebalance(uint256 amount0, uint256 amount1) public {
-        // First swap tokens
-        if (amount0 > 0) {
-            uint256 balance = weth.balanceOf(address(this));
-            if (amount0 > balance) {
-                // Need to mint more OETHb as all the OETHb have been bought
-                // Not a problem as we make benefit from the arbitrage
-                vault.mintOETHbForFree(amount0 - balance);
-            }
-            _swap(address(weth), amount0);
-        } else if (amount1 > 0) {
-            uint256 balance = oethb.balanceOf(address(this));
-            if (amount1 > balance) {
-                // In this case, we don't have enough WETH to swap, so we take it from the vault.
-                uint256 amountNeeded = amount1 - balance;
-                uint256 balanceVault = oethb.balanceOf(address(vault));
-                if (amountNeeded <= balanceVault) {
-                    // Vault has enough WETH to give
-                    vault.transferWETHToStrategyForFree(amountNeeded);
-                } else {
-                    // Vault doesn't have enough WETH to give, so vault transfers all its WETH to the strategy
-                    // And take a debt from DAO
-                    vault.transferWETHToStrategyForFree(balanceVault);
-                    vault.transferWETHToStrategyFromDAOTreasury(amountNeeded - balanceVault);
-                }
-                require(oethb.balanceOf(address(this)) >= amount1, "Not enough WETH");
-            }
-
-            _swap(address(oethb), amount1);
-        }
-        //(uint160 currentSqrtPriceX96,,,,,) = pool.slot0();
-        //uint256 diff = currentSqrtPriceX96 > targetPrice
-        //    ? uint256(currentSqrtPriceX96 - uint160(targetPrice))
-        //    : uint256(uint160(targetPrice) - currentSqrtPriceX96);
-        //emit log_named_uint("Diff between targeted price and current price in %: ", diff * 1e18 / uint256(targetPrice));
-
-        // Second add liquidity to pool
-        _increaseLiquidity(weth.balanceOf(address(this)), oethb.balanceOf(address(this)));
-    }
-
-    /*
-    function rebalance(uint256 percentage) public {
-        (uint256 amount0, uint256 amount1) = prepareRebalance(percentage);
-        finalizeRebalance(amount0, amount1);
-    }*/
-
     function rebalance() public {
-        rebalance(99e18);
+        rebalance(99e16);
     }
 
     function rebalance(uint256 percentage) public {
@@ -159,6 +75,7 @@ contract StrategyAMO is ActionsAMO {
         // 2.b Calculate the amount of tokens to swap to push the price to the target price
         (uint256 amount0Delta, uint256 amount1Delta) = _calculateAmounts(currentSqrtPriceX96, targetSqrtRatioBX96);
 
+        emit log_named_uint("Current price before swap: ", uint256(currentSqrtPriceX96));
         // 2.c Swap tokens to push price to the target price
         if (amount0Delta > 0) {
             // Need to swap WETH for OETHb
@@ -175,7 +92,7 @@ contract StrategyAMO is ActionsAMO {
                 }
             }
             require(weth.balanceOf(address(this)) >= amount0Delta, "Not enough WETH");
-            _swap(address(weth), amount0Delta);
+            _swap(address(weth), amount0Delta, defaultTargetPrice);
         } else if (amount1Delta > 0) {
             // Need to swap OETHb for WETH
             uint256 balance = oethb.balanceOf(address(this));
@@ -184,22 +101,27 @@ contract StrategyAMO is ActionsAMO {
                 vault.mintOETHbForFree(amount1Delta - balance);
             }
             require(oethb.balanceOf(address(this)) >= amount1Delta, "Not enough OETHb");
-            _swap(address(oethb), amount1Delta);
+            _swap(address(oethb), amount1Delta, defaultTargetPrice);
         }
         (currentSqrtPriceX96,,,,,) = pool.slot0();
-        emit log_named_uint("Current price: ", uint256(currentSqrtPriceX96));
+        emit log_named_uint("Current price After Swap:  ", uint256(currentSqrtPriceX96));
         emit log_named_uint("Target price: ", uint256(targetSqrtRatioBX96));
-        // Require that difference between current price and target price is less than 0.5%
-        vm.assertApproxEqRel(currentSqrtPriceX96, targetSqrtRatioBX96, 5e15, "Price not reached");
+        uint256 diff = currentSqrtPriceX96 > targetSqrtRatioBX96
+            ? currentSqrtPriceX96 - targetSqrtRatioBX96
+            : targetSqrtRatioBX96 - currentSqrtPriceX96;
+        emit log_named_uint("Difference: ", diff);
+        // Require that difference between current price and target price is less than 0.000001%
+        vm.assertApproxEqRel(currentSqrtPriceX96, targetSqrtRatioBX96, 1e10, "Price not reached");
+        //require(currentSqrtPriceX96 == targetSqrtRatioBX96, "Price not reached");
 
         // 3. Add remaining liquidity to pool
         (, uint256 amount0, uint256 amount1) =
             _increaseLiquidity(weth.balanceOf(address(this)), oethb.balanceOf(address(this)));
 
-        // Require that the amount0 is approx equal to ratio * amount1, 0.1% tolerance
+        // Require that the amount0 is approx equal to ratio * amount1, 0.05% tolerance
         emit log_named_uint("Amount0: ", amount0);
         emit log_named_uint("Amount1: ", amount1);
-        vm.assertApproxEqRel(amount0 * LIQUIDITY_RATIO / 1e9, amount1, 1e15, "Liquidity not added correctly");
+        vm.assertApproxEqRel(amount0 * LIQUIDITY_RATIO, amount1 * 1e9, 5e14, "Liquidity not added correctly");
 
         // Maybe we should burn OETHb excess?
     }
@@ -218,27 +140,26 @@ contract StrategyAMO is ActionsAMO {
 
         if (currentSqrtPriceX96 > targetSqrtRatioBX96) {
             // amount0Delta obtained by calling getAmount1Delta, yes.
-            amount0Delta =
-                sugarHelper.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, false);
+            amount0Delta = sugarHelper.getAmount0Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, true);
             emit log_named_uint("Amount0Delta: ", amount0Delta);
         } else if (currentSqrtPriceX96 < targetSqrtRatioBX96) {
             // amount1Delta obtained by calling getAmount0Delta, yes.
-            amount1Delta =
-                sugarHelper.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, false);
+            // I don't know why but price reached is closer to the target when using getAmount0Delta for amount1Delta.
+            amount1Delta = sugarHelper.getAmount1Delta(currentSqrtPriceX96, targetSqrtRatioBX96, liquidityInTicks, true);
             emit log_named_uint("Amount1Delta: ", amount1Delta);
         }
     }
 
-    function _getLiquidityBetweenTicks(int24 lowerTick, int24 upperTick) internal view returns (uint128) {
+    function _getLiquidityBetweenTicks(int24 lowerTick, int24 upperTick) internal returns (uint128) {
         uint128 liquidity;
         if (lowerTick > upperTick) {
             (lowerTick, upperTick) = (upperTick, lowerTick);
         }
-        for (int24 tick = lowerTick; tick < upperTick; tick += DEFAULT_TICK_SPACING) {
+        for (int24 tick = lowerTick; tick <= upperTick; tick += DEFAULT_TICK_SPACING) {
             (uint128 liquidityGross,,,,,,,,,) = pool.ticks(tick);
             liquidity += liquidityGross;
         }
-        //emit log_named_uint("Liquidity between ticks: ", liquidity);
+        emit log_named_uint("Liquidity between ticks: ", liquidity);
         return liquidity;
     }
 
