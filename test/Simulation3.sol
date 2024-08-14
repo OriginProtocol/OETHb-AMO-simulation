@@ -25,11 +25,11 @@ contract Simulation3A is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 80e16;
-        values[0][1] = 82e16;
+        values[0][0] = 400e7;
+        values[0][1] = 410e7;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 50 ether;
-        values[1][1] = 95 ether;
+        values[1][0] = 20 ether; // Less than initial liquidity deposited (40 ether)
+        values[1][1] = 50 ether; // More than initial liquidity deposited (40 ether)
         values[2] = new uint256[](4); // Ticks
         values[2][0] = 1;
         values[2][1] = 10;
@@ -43,7 +43,7 @@ contract Simulation3A is Base_Test_ {
         outputs[3] = "VaultBalanceAfter";
     }
 
-    function test_Simulation3A_1() public {
+    function test_Simulation3A_1_() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
@@ -196,20 +196,20 @@ contract Simulation3A is Base_Test_ {
 
     function _simulation(uint256 ratio, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
         initialize(ratio);
-        deal(address(token1), address(this), 20 ether);
-        vault.deposit(20 ether, address(this));
-        strategy.depositInPool(20 ether);
+        deal(address(weth), address(this), DEFAULT_LIQUIDITY_DEPOSIT);
+        vault.deposit(DEFAULT_LIQUIDITY_DEPOSIT, address(this));
+        strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Check values before
-        uint256 totalSupplyBefore = token0.totalSupply();
+        uint256 totalSupplyBefore = oethb.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
-        _provideLiquidity(amount, 1, ticks, ticks + 1);
+        _provideLiquidity(1, amount, -ticks - 1, -ticks);
         strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
-        uint256 totalSupplyAfter = token0.totalSupply();
+        uint256 totalSupplyAfter = oethb.totalSupply();
 
         uint256[] memory results = new uint256[](4);
         results[0] = totalSupplyBefore;
@@ -240,8 +240,8 @@ contract Simulation3B is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 80e16;
-        values[0][1] = 82e16;
+        values[0][0] = 400e7;
+        values[0][1] = 410e7;
         values[1] = new uint256[](2); // Amounts
         values[1][0] = 5 ether;
         values[1][1] = 15 ether;
@@ -258,7 +258,7 @@ contract Simulation3B is Base_Test_ {
         outputs[3] = "VaultBalanceAfter";
     }
 
-    function test_Simulation3B_1() public {
+    function test_Simulation3B_1_() public {
         uint256[] memory location = new uint256[](3);
         location[0] = values[0][0];
         location[1] = values[1][0];
@@ -411,20 +411,20 @@ contract Simulation3B is Base_Test_ {
 
     function _simulation(uint256 ratio, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
         initialize(ratio);
-        deal(address(token1), address(this), 20 ether);
-        vault.deposit(20 ether, address(this));
-        strategy.depositInPool(20 ether);
+        deal(address(weth), address(this), DEFAULT_LIQUIDITY_DEPOSIT);
+        vault.deposit(DEFAULT_LIQUIDITY_DEPOSIT, address(this));
+        strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Check values before
-        uint256 totalSupplyBefore = token0.totalSupply();
+        uint256 totalSupplyBefore = oethb.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
-        _provideLiquidity(1, amount, -ticks - 1, -ticks);
+        _provideLiquidity(amount, 1, ticks, ticks + 1);
         strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
-        uint256 totalSupplyAfter = token0.totalSupply();
+        uint256 totalSupplyAfter = oethb.totalSupply();
 
         uint256[] memory results = new uint256[](4);
         results[0] = totalSupplyBefore;

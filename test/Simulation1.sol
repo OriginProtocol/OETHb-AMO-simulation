@@ -7,6 +7,8 @@ import {Base_Test_} from "test/Base.sol";
 // Export data
 import {Exporter} from "test/utils/Exporter.sol";
 
+import {MockERC20} from "lib/solmate/src/test/utils/mocks/MockERC20.sol";
+
 contract Simulation1 is Base_Test_ {
     using Exporter for string;
 
@@ -24,9 +26,9 @@ contract Simulation1 is Base_Test_ {
 
         values = new uint256[][](2);
         values[0] = new uint256[](3); // Ratios
-        values[0][0] = 80e16;
-        values[0][1] = 81e16;
-        values[0][2] = 82e16;
+        values[0][0] = 400e7;
+        values[0][1] = 410e7;
+        values[0][2] = 420e7;
         values[1] = new uint256[](3); // Amounts
         values[1][0] = 10 ether;
         values[1][1] = 15 ether;
@@ -120,11 +122,11 @@ contract Simulation1 is Base_Test_ {
 
     function _simulation(uint256 ratio, uint256 amount) internal returns (uint256[] memory) {
         initialize(ratio);
-        deal(address(token1), address(this), amount);
+        deal(address(weth), address(this), amount);
         vault.deposit(amount, address(this));
 
         // Check values before
-        uint256 totalSupplyBefore = token0.totalSupply();
+        uint256 totalSupplyBefore = oethb.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
         strategy.depositInPool(amount);
@@ -132,7 +134,7 @@ contract Simulation1 is Base_Test_ {
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
-        uint256 totalSupplyAfter = token0.totalSupply();
+        uint256 totalSupplyAfter = oethb.totalSupply();
 
         uint256[] memory results = new uint256[](4);
         results[0] = totalSupplyBefore;
