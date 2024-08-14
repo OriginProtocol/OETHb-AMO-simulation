@@ -201,15 +201,15 @@ contract Simulation5A is Base_Test_ {
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
 
-        // Check values before
-        uint256 totalSupplyBefore = token0.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
-
         // Provide Liquiditity outside of current ticks
         _provideLiquidity(40 ether, 1, ticks, ticks + 1);
 
         // Try to push price in new ticks
         _buyOETHb(amount);
+
+        // Check values before
+        uint256 totalSupplyBefore = token0.totalSupply();
+        uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance
         strategy.rebalance(99e16);
@@ -252,8 +252,8 @@ contract Simulation5B is Base_Test_ {
         values[0][0] = 80e16;
         values[0][1] = 82e16;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 5 ether; // Less than initial liquidity deposited
-        values[1][1] = 15 ether; // More than initial liquidity deposited
+        values[1][0] = 10 ether; // Less than initial liquidity deposited
+        values[1][1] = 25 ether; // More than initial liquidity deposited
         values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 1;
         values[2][1] = 100;
@@ -425,18 +425,19 @@ contract Simulation5B is Base_Test_ {
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
 
-        // Check values before
-        uint256 totalSupplyBefore = token0.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
-
         // Provide Liquiditity outside of current ticks
         _provideLiquidity(1, 10 ether, -ticks - 1, -ticks);
 
         // Try to push price in new ticks
         _sellOETHb(amount);
 
+        // Check values before
+        uint256 totalSupplyBefore = token0.totalSupply();
+        uint256 balanceBefore = vault.checkBalance();
+
         // Try to rebalance
         strategy.rebalance(99e16);
+        strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();

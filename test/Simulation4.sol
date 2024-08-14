@@ -204,12 +204,12 @@ contract Simulation4A is Base_Test_ {
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
 
+        // Buy OETHb to move a bit the price
+        _buyOETHb(amount);
+
         // Check values before
         uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
-
-        // Buy OETHb to move a bit the price
-        _buyOETHb(amount);
 
         // Try to rebalance
         strategy.rebalance(rebalancePercentage);
@@ -429,12 +429,12 @@ contract Simulation4B is Base_Test_ {
         vault.deposit(20 ether, address(this));
         strategy.depositInPool(20 ether);
 
+        // Buy OETHb to move a bit the price
+        _sellOETHb(amount);
+
         // Check values before
         uint256 totalSupplyBefore = token0.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
-
-        // Buy OETHb to move a bit the price
-        _sellOETHb(amount);
 
         // Try to rebalance
         strategy.rebalance(rebalancePercentage);
