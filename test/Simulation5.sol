@@ -6,7 +6,7 @@ import {Base_Test_} from "test/Base.sol";
 
 // Export data
 import {Exporter} from "test/utils/Exporter.sol";
-/*
+
 contract Simulation5A is Base_Test_ {
     using Exporter for string;
 
@@ -25,11 +25,11 @@ contract Simulation5A is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 80e16;
-        values[0][1] = 82e16;
+        values[0][0] = 400e7;
+        values[0][1] = 410e7;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 50 ether; // Less than initial liquidity deposited
-        values[1][1] = 95 ether; // More than initial liquidity deposited
+        values[1][0] = 20 ether; // Less than initial liquidity deposited
+        values[1][1] = 50 ether; // More than initial liquidity deposited
         values[2] = new uint256[](4); // Ticks %
         values[2][0] = 1;
         values[2][1] = 10;
@@ -197,27 +197,29 @@ contract Simulation5A is Base_Test_ {
 
     function _simulation(uint256 ratio, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
         initialize(ratio);
-        deal(address(token1), address(this), 20 ether);
-        vault.deposit(20 ether, address(this));
-        strategy.depositInPool(20 ether);
+        deal(address(weth), address(this), DEFAULT_LIQUIDITY_DEPOSIT);
+        vault.deposit(DEFAULT_LIQUIDITY_DEPOSIT, address(this));
+        strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Provide Liquiditity outside of current ticks
-        _provideLiquidity(40 ether, 1, ticks, ticks + 1);
+        _provideLiquidity(1, DEFAULT_LIQUIDITY_DEPOSIT, -ticks - 1, -ticks);
 
         // Try to push price in new ticks
-        _buyOETHb(amount);
+        pool.slot0();
+        _buyOETHb(amount, -ticks - 1);
+        pool.slot0();
 
         // Check values before
-        uint256 totalSupplyBefore = token0.totalSupply();
+        uint256 totalSupplyBefore = oethb.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance
-        strategy.rebalance(99e16);
+        strategy.rebalance();
         strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
-        uint256 totalSupplyAfter = token0.totalSupply();
+        uint256 totalSupplyAfter = oethb.totalSupply();
 
         uint256[] memory results = new uint256[](5);
         results[0] = totalSupplyBefore;
@@ -249,16 +251,16 @@ contract Simulation5B is Base_Test_ {
 
         values = new uint256[][](3);
         values[0] = new uint256[](2); // Ratios
-        values[0][0] = 80e16;
-        values[0][1] = 82e16;
+        values[0][0] = 400e7;
+        values[0][1] = 410e7;
         values[1] = new uint256[](2); // Amounts
-        values[1][0] = 10 ether; // Less than initial liquidity deposited
-        values[1][1] = 25 ether; // More than initial liquidity deposited
+        values[1][0] = 5 ether; // Less than initial liquidity deposited
+        values[1][1] = 9 ether; // More than initial liquidity deposited
         values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 1;
-        values[2][1] = 100;
-        values[2][2] = 1_000;
-        values[2][3] = 10_000;
+        values[2][1] = 10;
+        values[2][2] = 100;
+        values[2][3] = 1_000;
 
         outputs = new string[](5);
         outputs[0] = "TotalSupplyBefore";
@@ -421,27 +423,27 @@ contract Simulation5B is Base_Test_ {
 
     function _simulation(uint256 ratio, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
         initialize(ratio);
-        deal(address(token1), address(this), 20 ether);
-        vault.deposit(20 ether, address(this));
-        strategy.depositInPool(20 ether);
+        deal(address(weth), address(this), DEFAULT_LIQUIDITY_DEPOSIT);
+        vault.deposit(DEFAULT_LIQUIDITY_DEPOSIT, address(this));
+        strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Provide Liquiditity outside of current ticks
-        _provideLiquidity(1, 10 ether, -ticks - 1, -ticks);
+        _provideLiquidity(DEFAULT_LIQUIDITY_DEPOSIT, 1, ticks, ticks + 1);
 
         // Try to push price in new ticks
-        _sellOETHb(amount);
+        _sellOETHb(amount, ticks + 1);
 
         // Check values before
-        uint256 totalSupplyBefore = token0.totalSupply();
+        uint256 totalSupplyBefore = oethb.totalSupply();
         uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance
-        strategy.rebalance(99e16);
+        strategy.rebalance();
         strategy.withdrawAllFromPool();
 
         // Check values after
         uint256 balanceAfter = vault.checkBalance();
-        uint256 totalSupplyAfter = token0.totalSupply();
+        uint256 totalSupplyAfter = oethb.totalSupply();
 
         uint256[] memory results = new uint256[](5);
         results[0] = totalSupplyBefore;
@@ -454,4 +456,3 @@ contract Simulation5B is Base_Test_ {
         return results;
     }
 }
-*/
