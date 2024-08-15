@@ -207,8 +207,8 @@ contract Simulation4A is Base_Test_ {
         _buyOETHb(amount, -1);
 
         // Check values before
-        uint256 totalSupplyBefore = oethb.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
+        // uint256 totalSupplyBefore = oethb.totalSupply();
+        // uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance
         strategy.rebalance(rebalancePercentage);
@@ -430,8 +430,8 @@ contract Simulation4B is Base_Test_ {
         _sellOETHb(amount, 1);
 
         // Check values before
-        uint256 totalSupplyBefore = oethb.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
+        // uint256 totalSupplyBefore = oethb.totalSupply();
+        // uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance
         strategy.rebalance(rebalancePercentage);

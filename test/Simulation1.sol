@@ -7,8 +7,6 @@ import {Base_Test_} from "test/Base.sol";
 // Export data
 import {Exporter} from "test/utils/Exporter.sol";
 
-import {MockERC20} from "lib/solmate/src/test/utils/mocks/MockERC20.sol";
-
 contract Simulation1 is Base_Test_ {
     using Exporter for string;
 
@@ -126,8 +124,8 @@ contract Simulation1 is Base_Test_ {
         vault.deposit(amount, address(this));
 
         // Check values before
-        uint256 totalSupplyBefore = oethb.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
+        // uint256 totalSupplyBefore = oethb.totalSupply();
+        // uint256 balanceBefore = vault.checkBalance();
 
         strategy.depositInPool(amount);
         strategy.withdrawAllFromPool();

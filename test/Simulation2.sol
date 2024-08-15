@@ -83,8 +83,8 @@ contract Simulation2A is Base_Test_ {
         strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Check values before
-        uint256 totalSupplyBefore = oethb.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
+        // uint256 totalSupplyBefore = oethb.totalSupply();
+        // uint256 balanceBefore = vault.checkBalance();
 
         pool.slot0();
         _buyOETHb(amount, 0);
@@ -183,8 +183,8 @@ contract Simulation2B is Base_Test_ {
         strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Check values before
-        uint256 totalSupplyBefore = oethb.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
+        // uint256 totalSupplyBefore = oethb.totalSupply();
+        // uint256 balanceBefore = vault.checkBalance();
 
         pool.slot0();
         _sellOETHb(amount, 1);
@@ -205,4 +205,3 @@ contract Simulation2B is Base_Test_ {
         return results;
     }
 }
-

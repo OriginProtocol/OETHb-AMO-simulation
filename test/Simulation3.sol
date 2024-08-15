@@ -201,8 +201,8 @@ contract Simulation3A is Base_Test_ {
         strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Check values before
-        uint256 totalSupplyBefore = oethb.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
+        // uint256 totalSupplyBefore = oethb.totalSupply();
+        // uint256 balanceBefore = vault.checkBalance();
 
         _provideLiquidity(1, amount, -ticks - 1, -ticks);
         strategy.withdrawAllFromPool();
@@ -416,8 +416,8 @@ contract Simulation3B is Base_Test_ {
         strategy.depositInPool(DEFAULT_LIQUIDITY_DEPOSIT);
 
         // Check values before
-        uint256 totalSupplyBefore = oethb.totalSupply();
-        uint256 balanceBefore = vault.checkBalance();
+        // uint256 totalSupplyBefore = oethb.totalSupply();
+        // uint256 balanceBefore = vault.checkBalance();
 
         _provideLiquidity(amount, 1, ticks, ticks + 1);
         strategy.withdrawAllFromPool();
