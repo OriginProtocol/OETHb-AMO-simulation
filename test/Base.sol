@@ -19,6 +19,10 @@ import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionM
 import {Base} from "test/utils/Addresses.sol";
 import {TickMath} from "test/libraries/TickMath.sol";
 
+// Contracts
+import {Vault} from "src/Vault.sol";
+import {StrategyAMO} from "src/StrategyAMO.sol";
+
 abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     /// --- CONSTANTS & IMMUTABLES
@@ -26,93 +30,170 @@ abstract contract Base_Test_ is Test {
     int24 public constant LOWER_TICK = 0;
     int24 public constant UPPER_TICK = 1;
     int24 public constant TICK_SPACING = 1;
-    uint256 public constant DEFAULT_AMOUNT = 100 ether;
+    int24 public constant DEFAULT_MAX_TICK = 1_000;
+    uint256 public constant DEFAULT_LIQUIDITY_DEPOSIT = 10 ether;
 
-    ERC20 public immutable AERO = ERC20(Base.AERO);
     IVoter public immutable voter = IVoter(Base.VOTER);
     ICLPoolFactory public immutable poolFactory = ICLPoolFactory(Base.CLPOOL_FACTORY);
 
     ////////////////////////////////////////////////////////////////
     /// --- CONTRACTS & INTERFACES
     ////////////////////////////////////////////////////////////////
-    address public feesVotingReward;
-
-    ERC20 public token0; // OETHb
-    ERC20 public token1; // WETH
-    ERC20 public rewardToken;
+    ERC20 public weth;
+    ERC20 public oethb;
+    Vault public vault;
+    StrategyAMO public strategy;
 
     ICLPool public pool;
     ICLGauge public gauge;
     INonfungiblePositionManager public nftManager;
 
-    ////////////////////////////////////////////////////////////////
-    /// --- STATE VARIABLES
-    ////////////////////////////////////////////////////////////////
-    uint256 public liquidityRatio = 8e17; // 80% OETHb, 20% WETH
+    string public path;
 
     ////////////////////////////////////////////////////////////////
     /// --- SETUP
     ////////////////////////////////////////////////////////////////
     function setUp() public virtual {
         // 1. Create fork
-        vm.createSelectFork("base", 17906760);
+        vm.createSelectFork("base", 18000000);
 
         // 2. Create Tokens
-        token0 = ERC20(new MockERC20("Origin ETH Base", "OETHb", 18));
-        token1 = ERC20(new MockERC20("Wrapped ETH", "WETH", 18));
-        rewardToken = ERC20(new MockERC20("Reward Token", "RT", 18));
-        if (token1 < token0) (token0, token1) = (token1, token0); // Needed for pool address computing
+        weth = ERC20(Base.WETH);
+        oethb = ERC20(Base.OETHB);
+        require(address(weth) < address(oethb), "Token0 must be less than Token1");
+        // Cheat and implement MockERC20 over OETHb, in order to facilitate testing, with minting and burning.
+        MockERC20 impl = new MockERC20("Origin ETH Base", "OETHb", 18);
+        vm.etch(address(oethb), address(impl).code);
 
         // 3. Whitelist token0 and token1 in Voter
         vm.startPrank(Base.GOV_VOTER);
-        voter.whitelistToken(address(token0), true);
-        voter.whitelistToken(address(token1), true);
+        voter.whitelistToken(address(weth), true);
+        voter.whitelistToken(address(oethb), true);
         vm.stopPrank();
 
-        // 4. Create Pool
+        path = string(abi.encodePacked(vm.projectRoot(), "/data/"));
+        if (!vm.isDir(path)) {
+            vm.createDir(string(abi.encodePacked(vm.projectRoot(), "/data/")), false);
+        }
+    }
+
+    function initialize(uint256 ratio) public {
+        // 1. Create Pool
         pool = ICLPool(
             poolFactory.createPool({
-                tokenA: address(token0),
-                tokenB: address(token1),
+                tokenA: address(weth),
+                tokenB: address(oethb),
                 tickSpacing: TICK_SPACING,
-                sqrtPriceX96: getInitialPriceWithRatio()
+                sqrtPriceX96: getInitialPriceWithRatio(ratio)
             })
         );
 
-        // 5. Create Gauge
-        gauge = ICLGauge(payable(voter.createGauge({_poolFactory: address(poolFactory), _pool: address(pool)})));
+        // 2. Create Gauge and get NFT Manager
+        gauge = ICLGauge(payable(voter.createGauge(address(poolFactory), address(pool))));
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
-        feesVotingReward = gauge.feesVotingReward();
 
-        // 6. Max approve all tokens
-        token0.approve(address(nftManager), type(uint256).max);
-        token1.approve(address(nftManager), type(uint256).max);
+        // Deploy StrategyAMO and Vault
+        strategy = new StrategyAMO(nftManager, pool, weth, oethb, ratio);
+        vault = new Vault(weth, oethb, ratio, strategy);
+        strategy.setVault(vault);
+
+        // Approvals
+        weth.approve(address(nftManager), type(uint256).max);
+        oethb.approve(address(nftManager), type(uint256).max);
+        weth.approve(address(vault), type(uint256).max);
+        oethb.approve(address(vault), type(uint256).max);
         nftManager.setApprovalForAll(address(gauge), true);
 
-        // 7. Label contracts
-        vm.label(address(token0), "OETHb");
-        vm.label(address(token1), "WETH");
-        vm.label(address(rewardToken), "Reward Token");
+        // Label
+        vm.label(address(weth), "WETH");
+        vm.label(address(oethb), "OETHb");
+        vm.label(address(strategy), "StrategyAMO");
+        vm.label(address(nftManager), "NFTManager");
         vm.label(address(pool), "CLPool OETHb/WETH");
         vm.label(address(gauge), "CLGauge OETHb/WETH");
-        vm.label(address(nftManager), "NFTManager");
-        vm.label(feesVotingReward, "Fees Voting Reward");
-        vm.label(address(voter), "Voter");
-        vm.label(address(AERO), "AERO token");
-    }
-
-    function getInitialPriceWithRatio() public view returns (uint160) {
-        return (
-            TickMath.getSqrtRatioAtTick(0) * uint160(liquidityRatio)
-                + TickMath.getSqrtRatioAtTick(1) * uint160(1e18 - liquidityRatio)
-        ) / 1e18;
+        vm.label(Base.SUGAR_HELPER, "SugarHelper");
     }
 
     ////////////////////////////////////////////////////////////////
-    /// --- CALLBACK
+    /// --- BASE ACTIONS
     ////////////////////////////////////////////////////////////////
+    function _buyOETHb(uint256 amount) internal {
+        _buyOETHb(amount, -DEFAULT_MAX_TICK);
+    }
+
+    function _buyOETHb(uint256 amount, int24 maxTick) internal {
+        // Give user a bit more WETH
+        deal(address(weth), address(this), amount * 110 / 100);
+        // User swap WETH for OETHb in the pool
+        pool.swap({
+            recipient: address(this),
+            zeroForOne: true,
+            amountSpecified: int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(maxTick),
+            data: ""
+        });
+    }
+
+    function _sellOETHb(uint256 amount) internal {
+        _sellOETHb(amount, DEFAULT_MAX_TICK);
+    }
+
+    function _sellOETHb(uint256 amount, int24 maxTick) internal {
+        // Give user WETH
+        deal(address(weth), address(this), amount);
+        // User approve vault to take WETH
+        weth.approve(address(vault), amount);
+        // User mint OETHb against WETH
+        vault.deposit(amount, address(this));
+        // User swap OETHb for WETH in the pool
+        pool.swap({
+            recipient: address(this),
+            zeroForOne: false,
+            amountSpecified: -int256(amount),
+            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(maxTick),
+            data: ""
+        });
+    }
+
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        if (amount0Delta > 0) token0.transfer(address(pool), uint256(amount0Delta));
-        else if (amount1Delta > 0) token1.transfer(address(pool), uint256(amount1Delta));
+        if (amount0Delta > 0) weth.transfer(address(pool), uint256(amount0Delta));
+        else if (amount1Delta > 0) oethb.transfer(address(pool), uint256(amount1Delta));
+    }
+
+    /// Note: amountDesired shouldn't be 0 even if it's not used, for example deposit full outside of current tick.
+    function _provideLiquidity(uint256 amount0, uint256 amount1, int24 tickLower, int24 tickUpper)
+        internal
+        returns (uint256 tokenId, uint128 liquidity, uint256 _amount0, uint256 _amount1)
+    {
+        if (amount0 > 1) {
+            deal(address(weth), address(this), amount0);
+        } else if (amount1 > 1) {
+            deal(address(weth), address(this), amount1);
+            vault.deposit(amount1, address(this));
+        }
+        return nftManager.mint(
+            INonfungiblePositionManager.MintParams({
+                token0: address(weth),
+                token1: address(oethb),
+                tickSpacing: 1,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                amount0Desired: amount0,
+                amount1Desired: amount1,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: address(this),
+                deadline: block.timestamp + 100,
+                sqrtPriceX96: 0
+            })
+        );
+    }
+
+    ////////////////////////////////////////////////////////////////
+    /// --- MATH
+    ////////////////////////////////////////////////////////////////
+    function getInitialPriceWithRatio(uint256 ratio) public pure returns (uint160) {
+        return (TickMath.getSqrtRatioAtTick(0) * 1e9 + TickMath.getSqrtRatioAtTick(1) * uint160(ratio))
+            / uint160(1e9 + ratio);
     }
 }

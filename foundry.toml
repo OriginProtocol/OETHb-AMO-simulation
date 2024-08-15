@@ -8,8 +8,11 @@ remappings = [
     "forge-std/=lib/forge-std/src/",
     "@slipstream/=lib/slipstream/contracts/",
     "@solmate/=lib/solmate/src/",
+    "@solady/=lib/solady/src/",
 ]
 ffi = true
+fs_permissions = [{ access = "read-write", path = "./"}]
+
 
 [etherscan]
 base = { key = "${BASESCAN_API_KEY}", chain = "base" }
