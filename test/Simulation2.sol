@@ -97,8 +97,8 @@ contract Simulation2A is Base_Test_ {
         uint256 totalSupplyAfter = oethb.totalSupply();
 
         uint256[] memory results = new uint256[](4);
-        results[0] = totalSupplyBefore;
-        results[1] = balanceBefore;
+        //results[0] = totalSupplyBefore;
+        //results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
 
@@ -196,8 +196,8 @@ contract Simulation2B is Base_Test_ {
         uint256 totalSupplyAfter = oethb.totalSupply();
 
         uint256[] memory results = new uint256[](4);
-        results[0] = totalSupplyBefore;
-        results[1] = balanceBefore;
+        //results[0] = totalSupplyBefore;
+        //results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
 
