@@ -4,12 +4,12 @@
 [submodule "lib/slipstream"]
 	path = lib/slipstream
 	url = https://github.com/aerodrome-finance/slipstream
-[submodule "lib/solmate"]
-	path = lib/solmate
-	url = https://github.com/transmissions11/solmate
 [submodule "lib/contracts"]
 	path = lib/contracts
 	url = https://github.com/aerodrome-finance/contracts
+[submodule "lib/solmate"]
+	path = lib/solmate
+	url = https://github.com/transmissions11/solmate
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/Vectorized/solady
