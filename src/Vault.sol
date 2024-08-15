@@ -13,7 +13,6 @@ contract Vault {
     /// --- VARIABLES
     //////////////////////////////////////////////////////
     uint256 public ratio;
-    uint256 public oethbMintedForAMO;
 
     ERC20 public weth;
     ERC20 public oethb;
@@ -35,7 +34,7 @@ contract Vault {
     }
 
     function checkBalance() external view returns (uint256) {
-        return weth.balanceOf(address(this)) + weth.balanceOf(address(strategy)) + oethbMintedForAMO;
+        return weth.balanceOf(address(this)) + weth.balanceOf(address(strategy)) + strategy.checkBalance();
     }
 
     //////////////////////////////////////////////////////
@@ -74,7 +73,6 @@ contract Vault {
 
     /// @notice To use when the AMO as no enough OETHb when doing rebalancing.
     function mintOETHbForFree(uint256 amount) external {
-        oethbMintedForAMO += amount;
         MockERC20(address(oethb)).mint(msg.sender, amount);
     }
 

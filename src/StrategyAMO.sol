@@ -27,6 +27,9 @@ contract StrategyAMO is ActionsAMO {
     //////////////////////////////////////////////////////
     Vm public immutable vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
     uint256 public immutable LIQUIDITY_RATIO;
+    uint160 public immutable sqrtRatioX96Tick0;
+    uint160 public immutable sqrtRatioX96Tick1;
+    uint160 public immutable sqrtRatioX96TickClosestToParity;
 
     //////////////////////////////////////////////////////
     /// --- VARIABLES
@@ -50,6 +53,9 @@ contract StrategyAMO is ActionsAMO {
         LIQUIDITY_RATIO = _liquidityRatio;
         defaultTargetPrice = getInitialPriceWithRatio(LIQUIDITY_RATIO);
         sugarHelper = ISugarHelper(Base.SUGAR_HELPER);
+        sqrtRatioX96Tick0 = sugarHelper.getSqrtRatioAtTick(0);
+        sqrtRatioX96Tick1 = sugarHelper.getSqrtRatioAtTick(1);
+        sqrtRatioX96TickClosestToParity = sugarHelper.getSqrtRatioAtTick(1);
     }
 
     function setVault(Vault _vault) external {
@@ -140,6 +146,18 @@ contract StrategyAMO is ActionsAMO {
         vm.assertApproxEqRel(amount0 * LIQUIDITY_RATIO, amount1 * 1e9, 5e14, "Liquidity not added correctly");
 
         // Maybe we should burn OETHb excess?
+    }
+
+    function checkBalance() public view returns (uint256) {
+        // 1. Get liquidity
+        (,,,,,,, uint128 liquidity,,,,) = nftManager.positions(tokenId);
+
+        // 2. Get amounts of OETHb in current liquidity
+        (uint256 amount0,) = sugarHelper.getAmountsForLiquidity(
+            sqrtRatioX96TickClosestToParity, sqrtRatioX96Tick0, sqrtRatioX96Tick1, liquidity
+        );
+
+        return amount0;
     }
 
     //////////////////////////////////////////////////////
