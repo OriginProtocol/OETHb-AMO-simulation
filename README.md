@@ -6,6 +6,11 @@
 - Graphs are stored in a new generate folder `data/graphs/`
 
 ## How to use it
+
+### First file the .env
+- `PROVIDER_URL_KEY` is mandatory. It is a alchemy API key. If you don't want to use Alchemy, change the RPC itself on the `foundry.toml`.
+- `BASESCAN_API_KEY` is optional. It is useful when debugging.
+
 #### Run Simulations
 ``` 
 make tests
