@@ -5,7 +5,7 @@ SCRIPT_DIR = script
 SCRIPT = simulation1.py
 SCRIPT2A = simulation2A.py
 SCRIPT2B = simulation2B.py
-SCRIPT3A = simulation3A.By
+SCRIPT3A = simulation3A.py
 SCRIPT3B = simulation3B.py
 SCRIPT4A = simulation4A.py
 SCRIPT4B = simulation4B.py
@@ -23,11 +23,32 @@ JSON_FILE4B = Simulation4B.json
 JSON_FILE5A = Simulation5A.json
 JSON_FILE5B = Simulation5B.json
 
+all:
+	@$(MAKE) tests
+	@$(MAKE) graphs
+
+tests:
+	mkdir -p data
+	@forge test --summary -v
+
 # Default target
-all: generate_graphs
+graphs: $(VENV_DIR)/bin/activate
+	@echo "Generating graphs for all simulations ..."
+	@. $(VENV_DIR)/bin/activate && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT) $(DATA_DIR)/$(JSON_FILE1) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT2A) $(DATA_DIR)/$(JSON_FILE2A) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT2B) $(DATA_DIR)/$(JSON_FILE2B) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT3A) $(DATA_DIR)/$(JSON_FILE3A) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT3B) $(DATA_DIR)/$(JSON_FILE3B) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4A) $(DATA_DIR)/$(JSON_FILE4A) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4B) $(DATA_DIR)/$(JSON_FILE4B) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT5A) $(DATA_DIR)/$(JSON_FILE5A) && \
+	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT5B) $(DATA_DIR)/$(JSON_FILE5B)
+	@echo "Graphs generated successfully for Simulation1!"
+
 
 # Generate graphs target for Simulation1
-generate_graphs: $(VENV_DIR)/bin/activate
+simulation1: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for Simulation1..."
 	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT) $(DATA_DIR)/$(JSON_FILE1)
 	@echo "Graphs generated successfully for Simulation1!"
@@ -87,10 +108,11 @@ $(VENV_DIR)/bin/activate: requirements.txt
 	@. $(VENV_DIR)/bin/activate; pip install -r requirements.txt || true
 	@echo "Virtual environment created successfully!"
 
-# Create empty requirements.txt if it doesn't exist
+# Create or update requirements.txt with matplotlib
 requirements.txt:
-	@echo "Creating empty requirements.txt..."
+	@echo "Creating or updating requirements.txt with matplotlib..."
 	@touch requirements.txt
+	@grep -q "matplotlib" requirements.txt || echo "matplotlib" >> requirements.txt
 
 # Clean target
 clean:

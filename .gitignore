@@ -8,7 +8,7 @@ out/
 /broadcast/**/dry-run/
 data/
 venv
-reqirements.txt
+requirements.txt
 script/graphs
 .DS_Store
 # Docs
