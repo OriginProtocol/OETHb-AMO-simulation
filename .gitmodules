@@ -4,3 +4,6 @@
 [submodule "lib/slipstream"]
 	path = lib/slipstream
 	url = https://github.com/aerodrome-finance/slipstream
+[submodule "lib/contracts"]
+	path = lib/contracts
+	url = https://github.com/aerodrome-finance/contracts
