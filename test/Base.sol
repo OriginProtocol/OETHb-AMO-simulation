@@ -33,7 +33,6 @@ abstract contract Base_Test_ is Test {
     int24 public constant DEFAULT_MAX_TICK = 1_000;
     uint256 public constant DEFAULT_LIQUIDITY_DEPOSIT = 10 ether;
 
-    ERC20 public immutable AERO = ERC20(Base.AERO);
     IVoter public immutable voter = IVoter(Base.VOTER);
     ICLPoolFactory public immutable poolFactory = ICLPoolFactory(Base.CLPOOL_FACTORY);
 
@@ -41,7 +40,7 @@ abstract contract Base_Test_ is Test {
     /// --- CONTRACTS & INTERFACES
     ////////////////////////////////////////////////////////////////
     ERC20 public weth;
-    ERC20 public oethb; // WETH
+    ERC20 public oethb;
     Vault public vault;
     StrategyAMO public strategy;
 
@@ -62,10 +61,11 @@ abstract contract Base_Test_ is Test {
         weth = ERC20(Base.WETH);
         oethb = ERC20(Base.OETHB);
         require(address(weth) < address(oethb), "Token0 must be less than Token1");
+        // Cheat and implement MockERC20 over OETHb, in order to facilitate testing, with minting and burning.
         MockERC20 impl = new MockERC20("Origin ETH Base", "OETHb", 18);
         vm.etch(address(oethb), address(impl).code);
 
-        // 3. Whitelist token0 and token1 in Voter: Not needed anymore
+        // 3. Whitelist token0 and token1 in Voter
         vm.startPrank(Base.GOV_VOTER);
         voter.whitelistToken(address(weth), true);
         voter.whitelistToken(address(oethb), true);
@@ -114,16 +114,9 @@ abstract contract Base_Test_ is Test {
         vm.label(Base.SUGAR_HELPER, "SugarHelper");
     }
 
-    function getInitialPriceWithRatio(uint256 ratio) public pure returns (uint160) {
-        return (TickMath.getSqrtRatioAtTick(0) * 1e9 + TickMath.getSqrtRatioAtTick(1) * uint160(ratio))
-            / uint160(1e9 + ratio);
-    }
-
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        if (amount0Delta > 0) weth.transfer(address(pool), uint256(amount0Delta));
-        else if (amount1Delta > 0) oethb.transfer(address(pool), uint256(amount1Delta));
-    }
-
+    ////////////////////////////////////////////////////////////////
+    /// --- BASE ACTIONS
+    ////////////////////////////////////////////////////////////////
     function _buyOETHb(uint256 amount) internal {
         _buyOETHb(amount, -DEFAULT_MAX_TICK);
     }
@@ -162,7 +155,12 @@ abstract contract Base_Test_ is Test {
         });
     }
 
-    /// Note: weird issue of amountDesired shouldn't be 0 even if it's not used, for example deposit full outside of current tick.
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+        if (amount0Delta > 0) weth.transfer(address(pool), uint256(amount0Delta));
+        else if (amount1Delta > 0) oethb.transfer(address(pool), uint256(amount1Delta));
+    }
+
+    /// Note: amountDesired shouldn't be 0 even if it's not used, for example deposit full outside of current tick.
     function _provideLiquidity(uint256 amount0, uint256 amount1, int24 tickLower, int24 tickUpper)
         internal
         returns (uint256 tokenId, uint128 liquidity, uint256 _amount0, uint256 _amount1)
@@ -189,5 +187,13 @@ abstract contract Base_Test_ is Test {
                 sqrtPriceX96: 0
             })
         );
+    }
+
+    ////////////////////////////////////////////////////////////////
+    /// --- MATH
+    ////////////////////////////////////////////////////////////////
+    function getInitialPriceWithRatio(uint256 ratio) public pure returns (uint160) {
+        return (TickMath.getSqrtRatioAtTick(0) * 1e9 + TickMath.getSqrtRatioAtTick(1) * uint160(ratio))
+            / uint160(1e9 + ratio);
     }
 }

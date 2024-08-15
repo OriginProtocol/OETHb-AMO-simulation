@@ -1,30 +1,45 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+// Foundry, used for assertions
 import {Vm} from "forge-std/Vm.sol";
 
-import {ActionsAMO} from "src/ActionsAMO.sol";
-
-import {Vault} from "src/Vault.sol";
+// Solmate & Solady
 import {ERC20} from "@solmate/tokens/ERC20.sol";
-import {ICLPool} from "test/interfaces/ICLPool.sol";
-import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
 import {SafeCastLib} from "@solady/utils/SafeCastLib.sol";
-import {SqrtPriceMath} from "src/libraries/SqrtPriceMath.sol";
-import {TickMath} from "test/libraries/TickMath.sol";
-import {ISugarHelper} from "test/interfaces/ISugarHelper.sol";
+
+// Base Addresses
 import {Base} from "test/utils/Addresses.sol";
 
+// Internal interfaces & libraries
+import {ICLPool} from "test/interfaces/ICLPool.sol";
+import {TickMath} from "test/libraries/TickMath.sol";
+import {ISugarHelper} from "test/interfaces/ISugarHelper.sol";
+import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
+
+// Internal contracts
+import {Vault} from "src/Vault.sol";
+import {ActionsAMO} from "src/ActionsAMO.sol";
+
 contract StrategyAMO is ActionsAMO {
+    //////////////////////////////////////////////////////
+    /// --- CONSTANTS & IMMUTABLES
+    //////////////////////////////////////////////////////
     Vm public immutable vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
     uint256 public immutable LIQUIDITY_RATIO;
 
+    //////////////////////////////////////////////////////
+    /// --- VARIABLES
+    //////////////////////////////////////////////////////
     Vault public vault;
     uint160 public targetPrice;
     uint160 public defaultTargetPrice;
 
     ISugarHelper public sugarHelper;
 
+    //////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR
+    //////////////////////////////////////////////////////
     constructor(
         INonfungiblePositionManager _nftManager,
         ICLPool _pool,
@@ -43,6 +58,9 @@ contract StrategyAMO is ActionsAMO {
         oethb.approve(address(vault), type(uint256).max);
     }
 
+    //////////////////////////////////////////////////////
+    /// --- LIQUIDITY MANAGEMENT
+    //////////////////////////////////////////////////////
     function depositInPool(uint256 amountWETH) external {
         (, uint256 amountOETHb) = vault.depositInStrategy(amountWETH);
         if (tokenId == 0) _addIinitialLiquidity(amountWETH, amountOETHb);
@@ -55,8 +73,6 @@ contract StrategyAMO is ActionsAMO {
         uint256 balanceOETHb = oethb.balanceOf(address(this));
         vault.withdrawFromStrategy(balanceOETHb, balanceWETH);
     }
-
-    event log_named_uint(string name, uint256 value);
 
     function rebalance() public {
         rebalance(99e16);
@@ -126,6 +142,9 @@ contract StrategyAMO is ActionsAMO {
         // Maybe we should burn OETHb excess?
     }
 
+    //////////////////////////////////////////////////////
+    /// --- INTERNAL LOGIC
+    //////////////////////////////////////////////////////
     function _calculateAmounts(uint160 currentSqrtPriceX96, uint160 targetSqrtRatioBX96)
         internal
         returns (
@@ -163,7 +182,10 @@ contract StrategyAMO is ActionsAMO {
         return liquidity;
     }
 
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+    //////////////////////////////////////////////////////
+    /// --- MATH
+    //////////////////////////////////////////////////////
+    function min(uint256 a, uint256 b) public pure returns (uint256) {
         return a < b ? a : b;
     }
 

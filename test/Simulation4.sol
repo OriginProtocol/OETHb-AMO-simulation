@@ -36,12 +36,11 @@ contract Simulation4A is Base_Test_ {
         values[2][2] = 95e16;
         values[2][3] = 99e16;
 
-        outputs = new string[](5);
+        outputs = new string[](4);
         outputs[0] = "TotalSupplyBefore";
         outputs[1] = "VaultBalanceBefore";
         outputs[2] = "TotalSupplyAfter";
         outputs[3] = "VaultBalanceAfter";
-        outputs[4] = "OETHbDebt";
     }
 
     function test_Simulation4A_1_() public {
@@ -220,12 +219,11 @@ contract Simulation4A is Base_Test_ {
         uint256 balanceAfter = vault.checkBalance();
         uint256 totalSupplyAfter = oethb.totalSupply();
 
-        uint256[] memory results = new uint256[](5);
+        uint256[] memory results = new uint256[](4);
         results[0] = totalSupplyBefore;
         results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
-        results[4] = vault.oethbDebt();
 
         // Return values
         return results;
@@ -261,12 +259,11 @@ contract Simulation4B is Base_Test_ {
         values[2][2] = 95e16;
         values[2][3] = 99e16;
 
-        outputs = new string[](5);
+        outputs = new string[](4);
         outputs[0] = "TotalSupplyBefore";
         outputs[1] = "VaultBalanceBefore";
         outputs[2] = "TotalSupplyAfter";
         outputs[3] = "VaultBalanceAfter";
-        outputs[4] = "WETHDebt";
     }
 
     function test_Simulation4B_1_() public {
@@ -445,12 +442,11 @@ contract Simulation4B is Base_Test_ {
         uint256 balanceAfter = vault.checkBalance();
         uint256 totalSupplyAfter = oethb.totalSupply();
 
-        uint256[] memory results = new uint256[](5);
+        uint256[] memory results = new uint256[](4);
         results[0] = totalSupplyBefore;
         results[1] = balanceBefore;
         results[2] = totalSupplyAfter;
         results[3] = balanceAfter;
-        results[4] = vault.oethbDebt();
 
         // Return values
         return results;

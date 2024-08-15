@@ -1,17 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+// Solmate & Solady
 import {ERC20} from "@solmate/tokens/ERC20.sol";
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// Internal interfaces & libraries
 import {ICLPool} from "test/interfaces/ICLPool.sol";
 import {TickMath} from "test/libraries/TickMath.sol";
 import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
 
 contract ActionsAMO {
-    int24 public immutable DEFAULT_TICK_SPACING;
-    int24 public immutable DEFAULT_LOWER_TICK;
-    int24 public immutable DEFAULT_UPPER_TICK;
+    //////////////////////////////////////////////////////
+    /// --- CONSTANTS & IMMUTABLES
+    //////////////////////////////////////////////////////
+    int24 public constant DEFAULT_LOWER_TICK = 0;
+    int24 public constant DEFAULT_UPPER_TICK = 1;
+    int24 public constant DEFAULT_TICK_SPACING = 1;
 
+    //////////////////////////////////////////////////////
+    /// --- VARIABLES
+    //////////////////////////////////////////////////////
     ERC20 public weth;
     ERC20 public oethb;
     ICLPool public pool;
@@ -19,11 +27,15 @@ contract ActionsAMO {
 
     uint256 public tokenId;
 
-    constructor(INonfungiblePositionManager _nftManager, ICLPool _pool, ERC20 _weth, ERC20 _oethb) {
-        DEFAULT_TICK_SPACING = 1;
-        DEFAULT_LOWER_TICK = 0;
-        DEFAULT_UPPER_TICK = 1;
+    //////////////////////////////////////////////////////
+    /// --- EVENTS
+    //////////////////////////////////////////////////////
+    event log_named_uint(string name, uint256 value);
 
+    //////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR
+    //////////////////////////////////////////////////////
+    constructor(INonfungiblePositionManager _nftManager, ICLPool _pool, ERC20 _weth, ERC20 _oethb) {
         pool = _pool;
         weth = _weth;
         oethb = _oethb;
@@ -34,6 +46,9 @@ contract ActionsAMO {
         oethb.approve(address(nftManager), type(uint256).max);
     }
 
+    //////////////////////////////////////////////////////
+    /// --- MANAGE LIQUIDITY
+    //////////////////////////////////////////////////////
     function _addIinitialLiquidity(uint256 amount0, uint256 amount1) internal returns (uint256, uint128) {
         (uint256 tokenId_, uint128 liquidity_,,) = nftManager.mint(
             INonfungiblePositionManager.MintParams({
@@ -94,26 +109,9 @@ contract ActionsAMO {
         return _decreaseLiquidity(liquidity);
     }
 
-    function _swap(address tokenIn, uint256 amountIn) internal {
-        _swap(tokenIn, amountIn, int24(100));
-    }
-
-    function _swap(address tokenIn, uint256 amountIn, int24 maxTick) internal {
-        bool zeroForOne = tokenIn == address(weth);
-        int256 amountSpecified = zeroForOne ? int256(amountIn) : -int256(amountIn);
-        uint160 sqrtPriceLimitX96 =
-            zeroForOne ? TickMath.getSqrtRatioAtTick(-maxTick) : TickMath.getSqrtRatioAtTick(maxTick);
-
-        // Swap
-        pool.swap({
-            recipient: address(this),
-            zeroForOne: zeroForOne,
-            amountSpecified: amountSpecified,
-            sqrtPriceLimitX96: sqrtPriceLimitX96,
-            data: ""
-        });
-    }
-
+    //////////////////////////////////////////////////////
+    /// --- SWAP
+    //////////////////////////////////////////////////////
     function _swap(address tokenIn, uint256 amountIn, uint160 sqrtPrice) internal {
         bool zeroForOne = tokenIn == address(weth);
         int256 amountSpecified = zeroForOne ? int256(amountIn) : -int256(amountIn);
@@ -132,13 +130,5 @@ contract ActionsAMO {
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
         if (amount0Delta > 0) weth.transfer(address(pool), uint256(amount0Delta));
         else if (amount1Delta > 0) oethb.transfer(address(pool), uint256(amount1Delta));
-    }
-
-    function _mintOETHb(uint256 amount, address receiver) internal {
-        MockERC20(address(weth)).mint(receiver, amount);
-    }
-
-    function _burnOETHb(uint256 amount, address receiver) internal {
-        MockERC20(address(weth)).burn(receiver, amount);
     }
 }

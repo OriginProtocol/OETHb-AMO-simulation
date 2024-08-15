@@ -1,21 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+// Solmate & Solady
 import {ERC20} from "@solmate/tokens/ERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
+// Internal contracts
 import {StrategyAMO} from "src/StrategyAMO.sol";
 
 contract Vault {
+    //////////////////////////////////////////////////////
+    /// --- VARIABLES
+    //////////////////////////////////////////////////////
     uint256 public ratio;
     uint256 public oethbMintedForAMO;
-    uint256 public oethbDebt;
-    uint256 public wethDebt;
 
     ERC20 public weth;
     ERC20 public oethb;
     StrategyAMO public strategy;
 
+    //////////////////////////////////////////////////////
+    /// --- EVENTS
+    //////////////////////////////////////////////////////
+    event log_named_uint(string name, uint256 value);
+
+    //////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR
+    //////////////////////////////////////////////////////
     constructor(ERC20 _weth, ERC20 _oeth, uint256 _ratio, StrategyAMO _strategy) {
         oethb = _oeth;
         weth = _weth;
@@ -27,9 +38,10 @@ contract Vault {
         return weth.balanceOf(address(this)) + weth.balanceOf(address(strategy)) + oethbMintedForAMO;
     }
 
+    //////////////////////////////////////////////////////
+    /// --- USER ACTIONS
+    //////////////////////////////////////////////////////
     function deposit(uint256 amount, address receiver) external {
-        weth.symbol();
-        weth.balanceOf(msg.sender);
         weth.transferFrom(msg.sender, address(this), amount);
         MockERC20(address(oethb)).mint(receiver, amount);
     }
@@ -39,13 +51,13 @@ contract Vault {
         weth.transfer(from, amount);
     }
 
-    event log_named_uint(string name, uint256 value);
-
+    //////////////////////////////////////////////////////
+    /// --- AMO ACTIONS
+    //////////////////////////////////////////////////////
     function depositInStrategy(uint256 amountWETH) external returns (uint256, uint256) {
         require(msg.sender == address(strategy), "Vault: Only strategy");
-        emit log_named_uint("Ratio", ratio);
-        uint256 amountOETHb = amountWETH * ratio / 1e9;
 
+        uint256 amountOETHb = amountWETH * ratio / 1e9;
         weth.transfer(address(strategy), amountWETH);
         MockERC20(address(oethb)).mint(address(strategy), amountOETHb);
 
@@ -60,10 +72,9 @@ contract Vault {
         require(oethb.balanceOf(address(strategy)) == 0, "Vault: OETHb balance not 0");
     }
 
-    /// @notice To use when the AMO as no more OETHb when doing rebalancing.
+    /// @notice To use when the AMO as no enough OETHb when doing rebalancing.
     function mintOETHbForFree(uint256 amount) external {
         oethbMintedForAMO += amount;
-        oethbDebt += amount;
         MockERC20(address(oethb)).mint(msg.sender, amount);
     }
 
@@ -72,11 +83,9 @@ contract Vault {
         weth.transfer(address(strategy), amount);
     }
 
-    function transferWETHToStrategyFromDAOTreasury(uint256 amount) external {
-        wethDebt += amount;
-        MockERC20(address(weth)).mint(msg.sender, amount);
-    }
-
+    //////////////////////////////////////////////////////
+    /// --- MATH
+    //////////////////////////////////////////////////////
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
