@@ -1,53 +1,85 @@
 import json
 import os
 import matplotlib.pyplot as plt
-from itertools import cycle
+import numpy as np
+from matplotlib.ticker import LogLocator, NullFormatter
 
-json_file_path = os.path.join('data', 'Simulation4B.json')
-
-with open(json_file_path, 'r') as file:
+# Load JSON data from file
+with open("data/Simulation4B.json", "r") as file:
     data = json.load(file)
 
-ratios = data['inputs']['Ratio']
-amounts = data['inputs']['Amount']
-rebalance_percentages = data['inputs']['Rebalance Percentage']
+# Extract inputs and outputs
+inputs = data["inputs"]
+outputs = data["outputs"]
 
-fig, axs = plt.subplots(len(amounts), 1, figsize=(12, len(amounts) * 6))
-if len(amounts) == 1:
-    axs = [axs]
+# Calculate the number of rows and columns for subplots
+num_amounts = len(inputs["Amount"])
+num_rebalance_percentages = len(inputs["Rebalance Percentage"])
+fig, axes = plt.subplots(num_amounts, num_rebalance_percentages, figsize=(5*num_rebalance_percentages, 5*num_amounts), squeeze=False)
 
-colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-color_cycle = cycle(colors)
+# Add a big title for the whole image
+fig.suptitle("Simulation 4B Results", fontsize=16, fontweight="bold")
 
-for i, amount in enumerate(amounts):
-    for rebalance_percentage in rebalance_percentages:
-        differences = []
-        debt = []
-        for ratio in ratios:
-            supply_diff = data['outputs']['TotalSupplyAfter'][str(ratio)][str(amount)][str(rebalance_percentage)] - \
-                          data['outputs']['TotalSupplyBefore'][str(ratio)][str(amount)][str(rebalance_percentage)]
-            vault_diff = data['outputs']['VaultBalanceAfter'][str(ratio)][str(amount)][str(rebalance_percentage)] - \
-                         data['outputs']['VaultBalanceBefore'][str(ratio)][str(amount)][str(rebalance_percentage)]
-            differences.append(vault_diff - supply_diff)
-            debt.append(data['outputs']['WETHDebt'][str(ratio)][str(amount)][str(rebalance_percentage)])
+# Custom minor tick locator
+class CustomLogLocator(LogLocator):
+    def tick_values(self, vmin, vmax):
+        ticks = super().tick_values(vmin, vmax)
+        return [t for t in ticks if abs(t) >= 1e-1 or (t <= -1e-1)]
+
+# Iterate over each Amount and Rebalance Percentage combination
+for i, amount in enumerate(inputs["Amount"]):
+    for j, rebalance_percentage in enumerate(inputs["Rebalance Percentage"]):
+        ax = axes[i, j]
         
-        color = next(color_cycle)
-        axs[i].plot(ratios, differences, label=f'Rebalance %: {int(rebalance_percentage)/1e18:.2f}', marker='o', color=color)
-        axs[i].plot(ratios, debt, label=f'WETH_Debt (Rebalance %: {int(rebalance_percentage)/1e18:.2f})', 
-                    linestyle='--', marker='s', color=color)
-    
-    axs[i].set_title(f'Amount: {int(amount)/1e18:.0f}', fontsize=14)
-    axs[i].set_xlabel('Ratio', fontsize=12)
-    axs[i].set_ylabel('Value', fontsize=12)
-    axs[i].set_ylim([-1e20, 1e20])
-    axs[i].legend()
-    axs[i].grid(True)
+        # Calculate (Vault Balance - TotalSupply) / 1e18 for each Ratio
+        diff = []
+        for ratio in inputs["Ratio"]:
+            ratio_str = str(ratio)
+            amount_str = str(amount)
+            rebalance_percentage_str = str(rebalance_percentage)
+            
+            vault_balance = outputs["VaultBalanceAfter"][ratio_str][amount_str][rebalance_percentage_str]
+            total_supply = outputs["TotalSupplyAfter"][ratio_str][amount_str][rebalance_percentage_str]
+            
+            diff.append((vault_balance - total_supply) / 1e18)
+        
+        # Plot the difference with marked simulation points
+        ax.plot(inputs["Ratio"], diff, label="(Vault Balance - TotalSupply) / 1e18", marker="o")
+        
+        # Set plot title and labels
+        ax.set_title(f"Amount: {amount / 1e18:.0f} * 1e18\nRebalance %: {rebalance_percentage / 1e16:.2f}%")
+        ax.set_xlabel("Ratio")
+        ax.set_ylabel("(Vault Balance - TotalSupply) / 1e18")
+        
+        # Set y-axis to symlog scale between -1e2 and 1e2
+        ax.set_yscale('symlog', linthresh=1)  # Use symlog to handle both positive and negative values
+        ax.set_ylim(-1e2, 1e2)
+        
+        # Add custom minor tick marks to y-axis
+        ax.yaxis.set_minor_locator(CustomLogLocator(base=10, subs=np.arange(1.0, 10.0) * 0.1, numticks=10))
+        ax.yaxis.set_minor_formatter(NullFormatter())  # Hide minor tick labels
+        
+        ax.grid(True, which="major", linestyle="-", alpha=0.7)  # Add grid for major ticks
+        ax.grid(True, which="minor", linestyle=":", alpha=0.4)  # Add dotted grid for minor ticks
+        ax.tick_params(axis='y', which='minor', left=True, length=4)  # Show minor ticks on y-axis
+        
+        ax.ticklabel_format(style="sci", scilimits=(0, 0), axis="x")  # Set scientific notation for x-axis tick labels
+        
+        # Set x-axis ticks to match the actual Ratio values
+        ax.set_xticks(inputs["Ratio"])
+        ax.set_xticklabels([f"{ratio / 1e9:.1f}" for ratio in inputs["Ratio"]], rotation=45)
+        
+        ax.legend()
 
-fig.suptitle('Simulation4B Results', fontsize=16)
-plt.tight_layout(rect=[0, 0, 1, 0.96])
+# Adjust layout
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-output_dir = os.path.join('data', 'graphs')
-os.makedirs(output_dir, exist_ok=True)
+# Create the "data/graphs" folder if it doesn't exist
+os.makedirs("data/graphs", exist_ok=True)
 
-plt.savefig(os.path.join(output_dir, 'Simulation4B.png'))
+# Save the graph as an image file
+plt.savefig("data/graphs/Simulation4B.png", dpi=300, bbox_inches="tight")
+print("Simulation 4B graph saved successfully!")
+
+# Optionally, display the plot (comment out if not needed)
 #plt.show()

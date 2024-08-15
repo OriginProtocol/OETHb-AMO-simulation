@@ -1,51 +1,65 @@
 import json
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Define the correct path to the JSON file
-json_file_path = os.path.join('data', 'Simulation2A.json')
-
-# Load the JSON data
-with open(json_file_path, 'r') as file:
+# Load JSON data from file
+with open("data/Simulation2A.json", "r") as file:
     data = json.load(file)
 
-# Extract the necessary data (assuming similar structure)
-ratios = data['inputs']['Ratio']
-amounts = data['inputs']['Amount']
+# Extract inputs and outputs
+inputs = data["inputs"]
+outputs = data["outputs"]
 
-total_supply_before = data['outputs']['TotalSupplyBefore']
-vault_balance_before = data['outputs']['VaultBalanceBefore']
-total_supply_after = data['outputs']['TotalSupplyAfter']
-vault_balance_after = data['outputs']['VaultBalanceAfter']
+# Determine the number of amounts
+num_amounts = len(inputs["Amount"])
 
-# Create the graph with subplots
-fig, axs = plt.subplots(len(amounts), 1, figsize=(10, len(amounts) * 5))
+# Create a figure with subplots based on the number of amounts
+fig, axes = plt.subplots(1, num_amounts, figsize=(5 * num_amounts, 5))
 
-for i, amount in enumerate(amounts):
-    difference = []
+# Add a big title for the whole image
+fig.suptitle("Simulation 2A Results", fontsize=16, fontweight="bold")
+
+# Ensure axes is always a list, even for a single subplot
+if num_amounts == 1:
+    axes = [axes]
+
+# Iterate over each amount
+for i, amount in enumerate(inputs["Amount"]):
+    amount_str = str(amount)
     
-    for ratio in ratios:
-        supply_diff = total_supply_after[str(ratio)][str(amount)] - total_supply_before[str(ratio)][str(amount)]
-        vault_diff = vault_balance_after[str(ratio)][str(amount)] - vault_balance_before[str(ratio)][str(amount)]
-        difference.append(vault_diff - supply_diff)
+    # Calculate the difference between Vault Balance and TotalSupply, divided by 1e18
+    diff = [(outputs["VaultBalanceAfter"][str(ratio)][amount_str] - outputs["TotalSupplyAfter"][str(ratio)][amount_str]) / 1e18
+            for ratio in inputs["Ratio"]]
     
-    # Plot the data for this amount
-    axs[i].plot(ratios, difference, label='Difference (VaultBalance - TotalSupply)', marker='o')
-    axs[i].set_title(f'Difference for Amount {int(amount)/1e18:.0f}', fontsize=14)
-    axs[i].set_xlabel('Ratio', fontsize=12)
-    axs[i].set_ylabel('Difference', fontsize=12)
-    axs[i].set_ylim([-1e21, 1e21])  # Set y-axis limits
-    axs[i].legend()
-    axs[i].grid(True)
+    # Plot the difference with marked simulation points
+    axes[i].plot(inputs["Ratio"], diff, label="(Vault Balance - TotalSupply) / 1e18", marker="o")
+    axes[i].set_title(f"Amount: {amount / 1e18:.0f} * 1e18")
+    axes[i].set_xlabel("Ratio")
+    axes[i].set_ylabel("(Vault Balance - TotalSupply) / 1e18")
+    
+    # Set y-axis to symlog scale between -1e2 and 1e2
+    axes[i].set_yscale('symlog', linthresh=1)  # Use symlog to handle both positive and negative values
+    axes[i].set_ylim(-1e2, 1e2)
+    
+    axes[i].grid(True, which="both", linestyle="--", alpha=0.7)  # Add grid
+    axes[i].ticklabel_format(style="sci", scilimits=(0, 0), axis="x")  # Set scientific notation for x-axis tick labels
+    
+    # Set x-axis ticks to match the actual Ratio values
+    axes[i].set_xticks(inputs["Ratio"])
+    axes[i].set_xticklabels([f"{ratio / 1e9:.1f}" for ratio in inputs["Ratio"]], rotation=45)
+    
+    axes[i].legend()
 
-# Set the main title and save the figure
-fig.suptitle('Simulation2A Results', fontsize=16)
-plt.tight_layout(rect=[0, 0, 1, 0.96])
+# Adjust spacing between subplots and the big title
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-# Define the output directory and create it if it doesn't exist
-output_dir = os.path.join('data', 'graphs')
-os.makedirs(output_dir, exist_ok=True)
+# Create the "data/graphs" folder if it doesn't exist
+os.makedirs("data/graphs", exist_ok=True)
 
-# Save the figure
-plt.savefig(os.path.join(output_dir, 'Simulation2A.png'))
-plt.show()
+# Save the graph as an image file with the name "Simulation2A_Modified.png"
+plt.savefig("data/graphs/Simulation2A.png", dpi=300)  # Increase DPI for better image quality
+print("Simulation 2A graph saved successfully!")
+
+# Display the graph
+#plt.show()
