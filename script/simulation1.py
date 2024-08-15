@@ -51,6 +51,15 @@ for i, amount in enumerate(inputs["Amount"]):
     
     axes[i].legend()
 
+    # Add text boxes with scientific notation for each point
+    for j, (x, y) in enumerate(zip(inputs["Ratio"], diff)):
+        axes[i].annotate(f'{y:.2e}', 
+                         (x, y),
+                         xytext=(5, 5), 
+                         textcoords='offset points',
+                         bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8),
+                         fontsize=8)
+
 # Adjust spacing between subplots and the big title
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 

@@ -71,6 +71,15 @@ for i, amount in enumerate(inputs["Amount"]):
         
         ax.legend()
 
+        # Add text boxes with scientific notation for each point
+        for x, y in zip(inputs["Ratio"], diff):
+            ax.annotate(f'{y:.2e}', 
+                        (x, y),
+                        xytext=(5, 5), 
+                        textcoords='offset points',
+                        bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8),
+                        fontsize=6) 
+
 # Adjust layout
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
