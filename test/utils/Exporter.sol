@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
-import {Vm} from "lib/contracts/lib/forge-std/src/Vm.sol";
-import {stdJson} from "lib/contracts/lib/forge-std/src/StdJson.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 library Exporter {
-    using stdJson for string;
-
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     function exportSimulation1(

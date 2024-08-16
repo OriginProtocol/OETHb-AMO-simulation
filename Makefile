@@ -11,6 +11,7 @@ SCRIPT4A = simulation4A.py
 SCRIPT4B = simulation4B.py
 SCRIPT5A = simulation5A.py
 SCRIPT5B = simulation5B.py
+SCRIPT6A = simulation6A.py
 DATA_DIR = data
 GRAPHS_DIR = $(DATA_DIR)/graphs
 JSON_FILE1 = Simulation1.json
@@ -22,6 +23,7 @@ JSON_FILE4A = Simulation4A.json
 JSON_FILE4B = Simulation4B.json
 JSON_FILE5A = Simulation5A.json
 JSON_FILE5B = Simulation5B.json
+JSON_FILE6A = Simulation6A.json
 
 all:
 	@$(MAKE) tests
@@ -100,6 +102,12 @@ simulation5B: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation5B..."
 	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT5B) $(DATA_DIR)/$(JSON_FILE5B)
 	@echo "Graphs generated successfully for simulation5B!"
+
+# Generate graphs target for simulation6A
+simulation6A: $(VENV_DIR)/bin/activate
+	@echo "Generating graphs for simulation6A..."
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT6A) $(DATA_DIR)/$(JSON_FILE6A)
+	@echo "Graphs generated successfully for simulation6A!"
 
 # Create virtual environment target
 $(VENV_DIR)/bin/activate: requirements.txt

@@ -164,3 +164,36 @@ Note 2:
 
 What's verified:
 - That the `(Vault Balance - TotalSupply) / 1e18 > 0`
+
+
+### Situation 6A
+Input parameters:
+- `Ratio`: Initial and target ratio when deposit initial liquidity.
+- `Amount`: Amount of WETH that will be provided as liquidity between ticks 0 and 1.
+- `Ticks`: Ticks values where liquidity will be deposited
+
+What's happening:
+- Alice deposit `10 ether` of WETH in the Vault and receive `10 ether` of OETHb.
+- Strategy starts the AMO and mint `10 ethers * Ratio` of OETHb.
+- Strategy takes the initial `10 ether` of WETH and the minted amount of OETHb and deposit both on the pool.
+- In situation A:
+  - Bob deposit `10 ethers` of WETH in the vault, get `10 ethers` of OETHb.
+  - Bob provides `10 ethers` liquidity of OETHb between `-ticks-1` and `-ticks`.
+  - Bob buy `10 ethers * ratio * 110%` of OETHb from the pool with maxPrice of `-ticks-1`, to push price in lower ticks.
+  - Bob provides `Amount` liquidity of WETH between ticks 0 and 1.
+- Rebalance Liquidity:
+  - Remove `99%` of the liquidity from the pool.
+  - Buy or sell OETH with liquidity pulled from pool to push price to initial ratio, between ticks 0 and 1.
+  - Deposit remaining tokens as liquidity in the pool between ticks 0 and 1.
+- Strategy remove all the liquidity from the pool.
+- The Vault takes back all the WETH from strategy and burn all OEHTb that hold the Strategy. 
+
+Note: When doing rebalancing, we are checking 2 things:
+- sqrtPriceX96 after swap is close from sqrtTargetedPriceX96 with a tolerence of 0.000001%
+- Amount of WETH deposited as liquidity * ratio is equal to the amount of token1 with a tolerence of 0.05%.
+Note 2: 
+- If there is not enough of OETHb after removing the liquidity to push the price back between ticks 0 and 1, then the vault mint it for free to the the strategy.
+- If there is not enought of WETH after removing the liquidity, the strategy tries to pull WETH from the Vault to rebalance. If after this, there is still not enough WETH to push the price back, then we are not monitoring this situation.
+
+What's verified:
+- That the `(Vault Balance - TotalSupply) / 1e18 > 0`
