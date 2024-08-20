@@ -4,196 +4,110 @@ pragma solidity 0.8.25;
 // Foundry
 import {Test} from "forge-std/Test.sol";
 
-// Solmate
-import {ERC20} from "@solmate/tokens/ERC20.sol";
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+// Solmate and Solady
+import {WETH} from "lib/solmate/src/tokens/WETH.sol";
+import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 
-// Aerodrome
-import {IVoter} from "test/interfaces/IVoter.sol";
+// Interfaces -- Aerodrome
 import {ICLPool} from "test/interfaces/ICLPool.sol";
 import {ICLGauge} from "test/interfaces/ICLGauge.sol";
-import {ICLPoolFactory} from "test/interfaces/ICLPoolFactory.sol";
+import {ISwapRouter} from "test/interfaces/ISwapRouter.sol";
 import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
 
-// Internal utils
-import {Base} from "test/utils/Addresses.sol";
-import {TickMath} from "test/libraries/TickMath.sol";
+// Interfaces -- AMO
+import {IVault} from "test/interfaces/IVault.sol";
+import {IAMOStrategy} from "test/interfaces/IAMOStrategy.sol";
 
-// Contracts
-import {Vault} from "src/Vault.sol";
-import {StrategyAMO} from "src/StrategyAMO.sol";
+// Utils
+import {Base} from "test/utils/Addresses.sol";
 
 abstract contract Base_Test_ is Test {
     ////////////////////////////////////////////////////////////////
     /// --- CONSTANTS & IMMUTABLES
     ////////////////////////////////////////////////////////////////
-    int24 public constant LOWER_TICK = 0;
-    int24 public constant UPPER_TICK = 1;
-    int24 public constant TICK_SPACING = 1;
-    int24 public constant DEFAULT_MAX_TICK = 1_000;
-    uint256 public constant DEFAULT_LIQUIDITY_DEPOSIT = 10 ether;
-
-    IVoter public immutable voter = IVoter(Base.VOTER);
-    ICLPoolFactory public immutable poolFactory = ICLPoolFactory(Base.CLPOOL_FACTORY);
+    int24 public constant DEFAULT_LOWER_TICK = -1;
+    int24 public constant DEFAULT_UPPER_TICK = 0;
+    int24 public constant DEFAULT_TICK_SPACING = 1;
 
     ////////////////////////////////////////////////////////////////
     /// --- CONTRACTS & INTERFACES
     ////////////////////////////////////////////////////////////////
-    ERC20 public weth;
-    ERC20 public oethb;
-    Vault public vault;
-    StrategyAMO public strategy;
+    WETH public weth; // Token 0
+    ERC20 public oethb; // Token 1
 
+    // Aerodrome
     ICLPool public pool;
     ICLGauge public gauge;
+    ISwapRouter public swapRouter;
     INonfungiblePositionManager public nftManager;
 
-    string public path;
+    // AMO
+    IVault public vault;
+    IAMOStrategy public strategy;
 
     ////////////////////////////////////////////////////////////////
     /// --- SETUP
     ////////////////////////////////////////////////////////////////
     function setUp() public virtual {
         // 1. Create fork
-        vm.createSelectFork("base", 18000000);
+        vm.createSelectFork("local");
 
-        // 2. Create Tokens
-        weth = ERC20(Base.WETH);
-        oethb = ERC20(Base.OETHB);
-        require(address(weth) < address(oethb), "Token0 must be less than Token1");
-        // Cheat and implement MockERC20 over OETHb, in order to facilitate testing, with minting and burning.
-        MockERC20 impl = new MockERC20("Origin ETH Base", "OETHb", 18);
-        vm.etch(address(oethb), address(impl).code);
+        // 2. Fetch AMO strategy
+        strategy = IAMOStrategy(Base.AMO_STRATEGY);
 
-        // 3. Whitelist token0 and token1 in Voter
-        vm.startPrank(Base.GOV_VOTER);
-        voter.whitelistToken(address(weth), true);
-        voter.whitelistToken(address(oethb), true);
-        vm.stopPrank();
-
-        path = string(abi.encodePacked(vm.projectRoot(), "/data/"));
-        if (!vm.isDir(path)) {
-            vm.createDir(string(abi.encodePacked(vm.projectRoot(), "/data/")), false);
-        }
-    }
-
-    function initialize(uint256 ratio) public {
-        // 1. Create Pool
-        pool = ICLPool(
-            poolFactory.createPool({
-                tokenA: address(weth),
-                tokenB: address(oethb),
-                tickSpacing: TICK_SPACING,
-                sqrtPriceX96: getInitialPriceWithRatio(ratio)
-            })
-        );
-
-        // 2. Create Gauge and get NFT Manager
-        gauge = ICLGauge(payable(voter.createGauge(address(poolFactory), address(pool))));
+        // 3. Fect usefull contracts
+        pool = strategy.clPool();
+        weth = WETH(payable(pool.token0()));
+        oethb = ERC20(pool.token1());
+        gauge = ICLGauge(payable(pool.gauge()));
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
 
-        // Deploy StrategyAMO and Vault
-        strategy = new StrategyAMO(nftManager, pool, weth, oethb, ratio);
-        vault = new Vault(weth, oethb, ratio, strategy);
-        strategy.setVault(vault);
+        // 4. Fetch AMO Strategy
+        vault = IVault(strategy.vaultAddress());
+        swapRouter = strategy.swapRouter();
 
-        // Approvals
-        weth.approve(address(nftManager), type(uint256).max);
-        oethb.approve(address(nftManager), type(uint256).max);
+        // 5. Set AMO strategy as default strategy for WETH on vault
+        vm.prank(address(strategy.governor()));
+        vault.setAssetDefaultStrategy(address(weth), address(strategy));
+
+        // 6. Approvals
+        // --- Vault
         weth.approve(address(vault), type(uint256).max);
         oethb.approve(address(vault), type(uint256).max);
-        nftManager.setApprovalForAll(address(gauge), true);
+        // --- Pool
+        weth.approve(address(pool), type(uint256).max);
+        oethb.approve(address(pool), type(uint256).max);
+        // --- NFTManager
+        weth.approve(address(nftManager), type(uint256).max);
+        oethb.approve(address(nftManager), type(uint256).max);
+        // --- SwapRouter
+        weth.approve(address(swapRouter), type(uint256).max);
+        oethb.approve(address(swapRouter), type(uint256).max);
 
-        // Label
+        // 7. Labels
         vm.label(address(weth), "WETH");
-        vm.label(address(oethb), "OETHb");
-        vm.label(address(strategy), "StrategyAMO");
+        vm.label(address(oethb), "OETHB");
+        vm.label(address(pool), "CLPOOL");
+        vm.label(address(gauge), "CLGAUGE");
+        vm.label(address(vault), "VAULT OETHb");
+        vm.label(address(strategy), "AMOStrategy");
         vm.label(address(nftManager), "NFTManager");
-        vm.label(address(pool), "CLPool OETHb/WETH");
-        vm.label(address(gauge), "CLGauge OETHb/WETH");
-        vm.label(Base.SUGAR_HELPER, "SugarHelper");
+        vm.label(address(Base.AMO_STRATEGY_IMPL), "AMOStrategyImpl");
     }
 
-    ////////////////////////////////////////////////////////////////
-    /// --- BASE ACTIONS
-    ////////////////////////////////////////////////////////////////
-    function _buyOETHb(uint256 amount) internal {
-        _buyOETHb(amount, -DEFAULT_MAX_TICK);
+    /// @notice Override the deal function to add the balanceBefore to amount minted
+    /// Otherwise it will over write the final balance with the minted amount.
+    function _deal(address token, address to, uint256 amount) internal {
+        uint256 balanceBefore = ERC20(token).balanceOf(to);
+        super.deal(token, to, amount + balanceBefore);
     }
 
-    function _buyOETHb(uint256 amount, int24 maxTick) internal {
-        // Give user a bit more WETH
-        deal(address(weth), address(this), amount * 110 / 100);
-        // User swap WETH for OETHb in the pool
-        pool.swap({
-            recipient: address(this),
-            zeroForOne: true,
-            amountSpecified: int256(amount),
-            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(maxTick),
-            data: ""
-        });
-    }
-
-    function _sellOETHb(uint256 amount) internal {
-        _sellOETHb(amount, DEFAULT_MAX_TICK);
-    }
-
-    function _sellOETHb(uint256 amount, int24 maxTick) internal {
-        // Give user WETH
-        deal(address(weth), address(this), amount);
-        // User approve vault to take WETH
-        weth.approve(address(vault), amount);
-        // User mint OETHb against WETH
-        vault.deposit(amount, address(this));
-        // User swap OETHb for WETH in the pool
-        pool.swap({
-            recipient: address(this),
-            zeroForOne: false,
-            amountSpecified: -int256(amount),
-            sqrtPriceLimitX96: TickMath.getSqrtRatioAtTick(maxTick),
-            data: ""
-        });
-    }
-
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        if (amount0Delta > 0) weth.transfer(address(pool), uint256(amount0Delta));
-        else if (amount1Delta > 0) oethb.transfer(address(pool), uint256(amount1Delta));
-    }
-
-    /// Note: amountDesired shouldn't be 0 even if it's not used, for example deposit full outside of current tick.
-    function _provideLiquidity(uint256 amount0, uint256 amount1, int24 tickLower, int24 tickUpper)
-        internal
-        returns (uint256 tokenId, uint128 liquidity, uint256 _amount0, uint256 _amount1)
-    {
-        if (amount0 > 1) {
-            deal(address(weth), address(this), amount0);
-        } else if (amount1 > 1) {
-            deal(address(weth), address(this), amount1);
-            vault.deposit(amount1, address(this));
+    function deal(address token, address to, uint256 amount) internal override {
+        if (amount == 0) return;
+        if (to != address(this)) super.deal(token, to, amount);
+        if (token == address(oethb)) {
+            _deal(address(weth), address(this), amount);
+            vault.mint(address(weth), amount, 0);
         }
-        return nftManager.mint(
-            INonfungiblePositionManager.MintParams({
-                token0: address(weth),
-                token1: address(oethb),
-                tickSpacing: 1,
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount0Desired: amount0,
-                amount1Desired: amount1,
-                amount0Min: 0,
-                amount1Min: 0,
-                recipient: address(this),
-                deadline: block.timestamp + 100,
-                sqrtPriceX96: 0
-            })
-        );
-    }
-
-    ////////////////////////////////////////////////////////////////
-    /// --- MATH
-    ////////////////////////////////////////////////////////////////
-    function getInitialPriceWithRatio(uint256 ratio) public pure returns (uint160) {
-        return (TickMath.getSqrtRatioAtTick(0) * 1e9 + TickMath.getSqrtRatioAtTick(1) * uint160(ratio))
-            / uint160(1e9 + ratio);
     }
 }
