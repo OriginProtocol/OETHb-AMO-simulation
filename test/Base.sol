@@ -16,6 +16,7 @@ import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionM
 
 // Interfaces -- AMO
 import {IVault} from "test/interfaces/IVault.sol";
+import {IQuoterV2} from "test/interfaces/IQuoter.sol";
 import {IAMOStrategy} from "test/interfaces/IAMOStrategy.sol";
 
 // Utils
@@ -38,6 +39,7 @@ abstract contract Base_Test_ is Test {
     // Aerodrome
     ICLPool public pool;
     ICLGauge public gauge;
+    IQuoterV2 public quoter;
     ISwapRouter public swapRouter;
     INonfungiblePositionManager public nftManager;
 
@@ -61,6 +63,7 @@ abstract contract Base_Test_ is Test {
         oethb = ERC20(pool.token1());
         gauge = ICLGauge(payable(pool.gauge()));
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
+        quoter = IQuoterV2(Base.QUOTERV2);
 
         // 4. Fetch AMO Strategy
         vault = IVault(strategy.vaultAddress());
@@ -89,6 +92,7 @@ abstract contract Base_Test_ is Test {
         vm.label(address(oethb), "OETHB");
         vm.label(address(pool), "CLPOOL");
         vm.label(address(gauge), "CLGAUGE");
+        vm.label(address(quoter), "QuoterV2");
         vm.label(address(vault), "VAULT OETHb");
         vm.label(address(strategy), "AMOStrategy");
         vm.label(address(nftManager), "NFTManager");
@@ -108,6 +112,8 @@ abstract contract Base_Test_ is Test {
         if (token == address(oethb)) {
             _deal(address(weth), address(this), amount);
             vault.mint(address(weth), amount, 0);
+        } else {
+            _deal(address(token), address(this), amount);
         }
     }
 }

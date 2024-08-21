@@ -10,4 +10,7 @@ interface IAMOStrategy {
     function clPool() external view returns (ICLPool);
     function vaultAddress() external view returns (address);
     function swapRouter() external view returns (ISwapRouter);
-}
+    function poolWethShareVarianceAllowed() external view returns (uint256);
+    function poolWethShare() external view returns (uint256);
+    function tokenId() external view returns (uint256);
+    }

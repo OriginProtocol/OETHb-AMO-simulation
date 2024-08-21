@@ -4,7 +4,7 @@ pragma solidity 0.8.25;
 // Base test
 import {Base_Test_} from "test/Base.sol";
 
-contract Base_AMO_Actions_ is Base_Test_ {
+abstract contract Base_AMO_Actions_ is Base_Test_ {
     function allocate() public {
         vault.allocate();
     }

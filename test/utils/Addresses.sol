@@ -10,6 +10,7 @@ library Base {
     address public constant CLPOOL_WETH_OETHB = 0x6446021F4E396dA3df4235C62537431372195D38;
 
     address public constant VOTER = 0x16613524e02ad97eDfeF371bC883F2F5d6C480A5;
+    address public constant QUOTERV2 = 0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0;
     address public constant GOV_VOTER = 0xE6A41fE61E7a1996B59d508661e3f524d6A32075;
     address public constant SUGAR_HELPER = 0x0AD09A66af0154a84e86F761313d02d0abB6edd5;
     address public constant CLPOOL_FACTORY = 0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A;
