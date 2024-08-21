@@ -20,8 +20,8 @@ abstract contract Base_AMO_Actions_ is Base_Test_ {
     }
 
     function withdrawAll() public {
-        vm.prank(address(vault));
-        strategy.withdrawAll();
+        vm.prank(vault.governor());
+        vault.withdrawAllFromStrategy(address(strategy));
     }
 
     function setPoolWethShare(uint256 share) public {

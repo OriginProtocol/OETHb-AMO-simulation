@@ -41,15 +41,15 @@ for i, amount in enumerate(inputs["Amount"]):
             vault_balance = outputs["VaultBalanceAfter"][ratio_str][amount_str][tick_str]
             total_supply = outputs["TotalSupplyAfter"][ratio_str][amount_str][tick_str]
             
-            diff.append((vault_balance - total_supply) / 1e18)
+            diff.append((total_supply - vault_balance) / 1e18)
         
         # Plot the difference with marked simulation points
-        ax.plot(inputs["Ratio"], diff, label="(Vault Balance - TotalSupply) / 1e18", marker="o")
+        ax.plot(inputs["Ratio"], diff, label="(TotalSupply - Vault Balance) / 1e18", marker="o")
         
         # Set plot title and labels
         ax.set_title(f"Amount: {amount / 1e18:.0f} * 1e18\n Ticks : {tick}")
         ax.set_xlabel("Ratio")
-        ax.set_ylabel("(Vault Balance - TotalSupply) / 1e18")
+        ax.set_ylabel("(TotalSupply - Vault Balance) / 1e18")
         
         # Set y-axis to symlog scale between -1e2 and 1e2
         ax.set_yscale('symlog', linthresh=1)  # Use symlog to handle both positive and negative values
