@@ -24,6 +24,7 @@ contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
     uint160 public immutable DEFAULT_PRICE_LIMITE_HIGH = TickMath.getSqrtRatioAtTick(10_000);
     uint256 public constant DEFAULT_AMOUNT_TO_SWAP_START_MIN = 0.000001 ether;
     uint256 public constant DEFAULT_AMOUNT_TO_SWAP_START_MAX = 100000 ether;
+    uint256 public constant DEFAULT_INITIAL_DEPOSIT = 40 ether;
 
     function test_Quoter_WETHToOETHb() public {
         // Someone mint 100 OETHb

@@ -13,4 +13,7 @@ interface IAMOStrategy {
     function poolWethShareVarianceAllowed() external view returns (uint256);
     function poolWethShare() external view returns (uint256);
     function tokenId() external view returns (uint256);
-    }
+    function withdrawAll() external;
+    function setPoolWethShare(uint256 share) external;
+    function setWithdrawLiquidityShare(uint128 share) external;
+}

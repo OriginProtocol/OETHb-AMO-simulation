@@ -18,4 +18,19 @@ abstract contract Base_AMO_Actions_ is Base_Test_ {
         allocate();
         rebalance(_amountToSwap, _minTokenReceived, _swapWeth);
     }
+
+    function withdrawAll() public {
+        vm.prank(address(vault));
+        strategy.withdrawAll();
+    }
+
+    function setPoolWethShare(uint256 share) public {
+        vm.prank(strategy.governor());
+        strategy.setPoolWethShare(share);
+    }
+
+    function setWithdrawLiquidityShare(uint256 share) public {
+        vm.prank(strategy.governor());
+        strategy.setWithdrawLiquidityShare(uint128(share));
+    }
 }
