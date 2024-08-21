@@ -129,11 +129,11 @@ contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
         );
 
         if (display) {
-            uint256 deviance = (max(targetPrice, priceAfter) - min(targetPrice, priceAfter)) * 1e18 / targetPrice;
+            uint256 deviance = (max(targetPrice, priceAfter) - min(targetPrice, priceAfter)) * 1e27 / targetPrice;
             console.log("PriceBefore: ", priceBefore);
             console.log("TargetPrice: ", targetPrice);
             console.log("PriceAfter : ", priceAfter);
-            console.log("deviance: %18e", deviance);
+            console.log("deviance: ", deviance);
             console.log("Amount to swap: %18e", amountToSwap);
             console.log("Iterations: ", iterations);
         }

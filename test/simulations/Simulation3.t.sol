@@ -197,7 +197,7 @@ contract Simulation3A is Base_Simulations_ {
     function _simulation(uint256 share, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
-        allocate();
+        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
@@ -411,7 +411,7 @@ contract Simulation3B is Base_Simulations_ {
     function _simulation(uint256 share, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
-        allocate();
+        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();

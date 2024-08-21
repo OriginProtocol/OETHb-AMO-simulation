@@ -121,7 +121,7 @@ contract Simulation1 is Base_Simulations_ {
     function _simulation(uint256 share, uint256 amount) internal returns (uint256[] memory) {
         deal(address(oethb), address(this), amount);
         setPoolWethShare(share);
-        allocate();
+        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
 
         withdrawAll();
 
