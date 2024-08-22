@@ -11,7 +11,7 @@ abstract contract Base_AMO_Actions_ is Base_Test_ {
 
     function rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWeth) public {
         vm.prank(strategy.governor());
-        strategy.rebalance(_amountToSwap, _minTokenReceived, _swapWeth);
+        strategy.rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
     }
 
     function allocateAndRebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWeth) public {

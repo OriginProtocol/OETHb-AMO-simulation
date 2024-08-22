@@ -200,8 +200,9 @@ contract Simulation4A is Base_Simulations_ {
     {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(ratio);
-        setWithdrawLiquidityShare(rebalancePercentage);
         allocate();
+        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
+        //rebalance(2700217571139457, 0, true);
 
         // Buy OETHb to move a bit the price
         swapWETHExactInput(amount, DEFAULT_PRICE_LIMITE_LOW, true);
@@ -211,9 +212,11 @@ contract Simulation4A is Base_Simulations_ {
         // uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance, need to sell OETHb to reach the price
-        rebalance(amountOfOETHbToSwapToReachPrice(true), 0, false);
+        rebalance(amountOfOETHbToSwapToReachPriceBeforeRebalance(), 0, false);
 
-        withdrawAll();
+        //rebalance(amountOfOETHbToSwapToReachPrice(true), 0, false);
+
+        //withdrawAll();
 
         // Check values after
         uint256 balanceAfter = vault.totalValue();
@@ -423,8 +426,7 @@ contract Simulation4B is Base_Simulations_ {
     {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(ratio);
-        setWithdrawLiquidityShare(rebalancePercentage);
-        allocate();
+        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
 
         // Sell OETHb to move a bit the price
         swapOETHbExactInput(amount, DEFAULT_PRICE_LIMITE_HIGH, true);
@@ -434,7 +436,7 @@ contract Simulation4B is Base_Simulations_ {
         // uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance, need to buy OETHb to reach the price
-        rebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         withdrawAll();
 

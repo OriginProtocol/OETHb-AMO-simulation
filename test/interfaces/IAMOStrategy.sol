@@ -5,8 +5,13 @@ import {ICLPool} from "test/interfaces/ICLPool.sol";
 import {ISwapRouter} from "test/interfaces/ISwapRouter.sol";
 
 interface IAMOStrategy {
+    error PoolRebalanceOutOfBounds(
+        uint256 currentPoolWethShare,
+        uint256 requiredPoolWethShare
+    ); 
+
     function governor() external view returns (address);
-    function rebalance(uint256 _amountToSwap, uint256 _minTokenReceived, bool _swapWeth) external;
+    function rebalance(uint256 _amountToSwap, bool _swapWeth, uint256 _minTokenReceived) external;
     function clPool() external view returns (ICLPool);
     function vaultAddress() external view returns (address);
     function swapRouter() external view returns (ISwapRouter);

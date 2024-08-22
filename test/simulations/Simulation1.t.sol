@@ -138,4 +138,10 @@ contract Simulation1 is Base_Simulations_ {
         // Return values
         return results;
     }
+
+    function test_Quoter_Rebalance() public {
+        deal(address(oethb), address(this), 20 ether);
+        allocate();
+        amountOfWETHToSwapToReachPriceBeforeRebalance();
+    }
 }

@@ -141,6 +141,43 @@ contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
         return amountToSwap;
     }
 
+    function amountOfWETHToSwapToReachPriceBeforeRebalance() public returns (uint256) {
+        //vm.startPrank(strategy.governor());
+        (uint256 amount, uint256 iterations) = BinarySearchQuoter.amountToSwapToReachTargetPriceBeforeRebalance(
+            BinarySearchQuoter.BinarySearchQuoterParams({
+                swapWETHForOETHB: true,
+                targetPrice: 0, // Not needed here
+                sqrtPriceLimitX96: 0, // Not needed here
+                minAmount: 0.0000001 ether,
+                maxAmount: 0.01 ether,
+                allowedVariance: 0, // Not needed here
+                maxIterations: 50
+            })
+        );
+        console.log("Amount to swap: %18e", amount);
+        console.log("Iterations: ", iterations);
+        return (amount);
+    }
+
+    function amountOfOETHbToSwapToReachPriceBeforeRebalance() public returns (uint256) {
+        //vm.startPrank(strategy.governor());
+        (uint256 amount, uint256 iterations) = BinarySearchQuoter.amountToSwapToReachTargetPriceBeforeRebalance(
+            BinarySearchQuoter.BinarySearchQuoterParams({
+                swapWETHForOETHB: false,
+                targetPrice: 0, // Not needed here
+                sqrtPriceLimitX96: 0, // Not needed here
+                minAmount: 0.0000001 ether,
+                maxAmount: 0.01 ether,
+                allowedVariance: 0, // Not needed here
+                maxIterations: 20
+            })
+        );
+        console.log("Amount to swap: %18e", amount);
+        console.log("Iterations: ", iterations);
+        return (amount);
+    }
+
+    //00.002700217571139457
     function getTargetPrice() public view returns (uint160) {
         uint256 share = strategy.poolWethShare();
         return (

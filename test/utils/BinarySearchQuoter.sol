@@ -3,11 +3,15 @@ pragma solidity 0.8.25;
 
 import {Base} from "test/utils/Addresses.sol";
 import {IQuoterV2} from "test/interfaces/IQuoter.sol";
+import {ISugarHelper} from "test/interfaces/ISugarHelper.sol";
+import {IAMOStrategy} from "test/interfaces/IAMOStrategy.sol";
 
 library BinarySearchQuoter {
     int24 private constant TICK_SPACING = 1;
     uint256 private constant PERCENTAGE_BASE = 1e27; // 100%
     IQuoterV2 private constant quoter = IQuoterV2(Base.QUOTERV2);
+    IAMOStrategy private constant strategy = IAMOStrategy(Base.AMO_STRATEGY);
+    ISugarHelper private constant sugarHelper = ISugarHelper(Base.SUGAR_HELPER);
 
     struct BinarySearchQuoterParams {
         bool swapWETHForOETHB;
@@ -31,6 +35,13 @@ library BinarySearchQuoter {
         address tokenOut;
         int24 tickSpacing;
         uint160 sqrtPriceLimitX96;
+    }
+
+    enum RevertReasons {
+        RebalanceOutOfBounds,
+        NotInExpectedTickRange,
+        UnexpectedError,
+        Found
     }
 
     function amountToSwapToReachPrice(BinarySearchQuoterParams memory params)
@@ -108,6 +119,94 @@ library BinarySearchQuoter {
             return currentPrice - targetPrice <= allowedVariance;
         } else {
             return targetPrice - currentPrice <= allowedVariance;
+        }
+    }
+
+    function amountToSwapToReachTargetPriceBeforeRebalance(BinarySearchQuoterParams memory params)
+        public
+        returns (uint256, uint256)
+    {
+        uint256 low = params.minAmount;
+        uint256 high = params.maxAmount;
+        uint256 iterations = 0;
+
+        while (low <= high && iterations < params.maxIterations) {
+            uint256 mid = (low + high) / 2;
+
+            // Get quote to get pool share after swapping `amount` and rebalancing
+            (RevertReasons reason, uint256 currentPoolWethShare, uint256 targetedPoolWethShare) =
+                getPoolShareAfterRebalance(mid, params.swapWETHForOETHB);
+
+            // Best case, we found the `amount` that will reach the target pool share!
+            if (reason == RevertReasons.Found) {
+                emit log_named_uint("Amount Found: ", mid);
+                return (mid, iterations);
+            }
+
+            // Worst case, it reverted and we don't know why
+            if (reason == RevertReasons.UnexpectedError) {
+                revert("Quoter: Unexpected error");
+            }
+
+            // If the pool is not in the expected tick range, we need to increase the amount
+            // Must be improve
+            if (reason == RevertReasons.NotInExpectedTickRange) {
+                emit log_named_uint("Amount Wrong tick range: ", mid);
+                low = mid + 1;
+            }
+
+            // If the pool is out of bounds, we need to adjust the amount to reach the target pool share
+            if (reason == RevertReasons.RebalanceOutOfBounds) {
+                emit log_named_uint("Amount Reverted: ", mid);
+                emit log_named_uint("Current pool share Reverted : ", currentPoolWethShare);
+                emit log_named_uint("Targeted pool share Reverted: ", targetedPoolWethShare);
+                // If the current pool share is less than the target pool share, we need to increase the amount
+                if (
+                    params.swapWETHForOETHB
+                        ? currentPoolWethShare < targetedPoolWethShare
+                        : currentPoolWethShare > targetedPoolWethShare
+                ) {
+                    low = mid + 1;
+                }
+                // Else we need to decrease the amount
+                else {
+                    high = mid;
+                }
+            }
+
+            iterations++;
+        }
+
+        //return (0, iterations);
+        revert("Quoter: max iterations reached");
+    }
+
+    event log_named_uint(string name, uint256 value);
+
+    function getPoolShareAfterRebalance(uint256 amount, bool swapWETH)
+        public
+        returns (RevertReasons, uint256 currentPoolWethShare, uint256 targetedPoolWethShare)
+    {
+        try strategy.rebalance(amount, swapWETH, 0) {
+            return (RevertReasons.Found, 1, 1);
+        } catch Error(string memory reason) {
+            if (keccak256(bytes(reason)) == keccak256(bytes("Not in expected tick range"))) {
+                return (RevertReasons.NotInExpectedTickRange, 0, 0);
+            }
+            return (RevertReasons.UnexpectedError, 0, 0);
+        } catch (bytes memory reason) {
+            bytes4 receivedSelector = bytes4(reason);
+            bytes4 expectedSelector = IAMOStrategy.PoolRebalanceOutOfBounds.selector;
+
+            if (receivedSelector == expectedSelector) {
+                assembly ("memory-safe") {
+                    currentPoolWethShare := mload(add(reason, 0x24))
+                    targetedPoolWethShare := mload(add(reason, 0x44))
+                }
+                return (RevertReasons.RebalanceOutOfBounds, currentPoolWethShare, targetedPoolWethShare);
+            } else {
+                return (RevertReasons.UnexpectedError, 0, 0);
+            }
         }
     }
 }
