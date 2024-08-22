@@ -7,6 +7,8 @@ import {ISwapRouter} from "test/interfaces/ISwapRouter.sol";
 interface IAMOStrategy {
     error PoolRebalanceOutOfBounds(uint256 currentPoolWethShare, uint256 requiredPoolWethShare);
     error OutsideExpectedTickRange(int24 currentTick, int24 lowerTick, int24 upperTick);
+    error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth);
+    error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth);
 
     function governor() external view returns (address);
     function rebalance(uint256 _amountToSwap, bool _swapWeth, uint256 _minTokenReceived) external;

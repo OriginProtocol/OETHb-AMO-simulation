@@ -40,6 +40,8 @@ library BinarySearchQuoter {
     enum RevertReasons {
         RebalanceOutOfBounds,
         NotInExpectedTickRange,
+        NotEnoughWethForSwap,
+        NotEnoughWethLiquidity,
         UnexpectedError,
         Found
     }
@@ -190,6 +192,20 @@ library BinarySearchQuoter {
                 }
             }
 
+            // If we don't have enough WETH to swap, we need to decrease the amount
+            // This error can happen, when initial value of mid is too high, so we need to decrease it
+            if (reason == RevertReasons.NotEnoughWethForSwap) {
+                emit log_named_uint("Amount Not enough WETH: ", mid);
+                high = mid;
+            }
+
+            // If we don't have enough WETH liquidity
+            // Revert for the moment, we need to improve this
+            if (reason == RevertReasons.NotEnoughWethLiquidity) {
+                emit log_named_uint("Amount Not enough WETH liquidity: ", mid);
+                revert("Quoter: Not enough WETH liquidity");
+            }
+
             iterations++;
         }
 
@@ -212,7 +228,7 @@ library BinarySearchQuoter {
     {
         try strategy.rebalance(amount, swapWETH, 0) {
             return (RevertReasons.Found, 1, 1, 1, 1, 1);
-        } catch Error(string memory reason) {
+        } catch Error(string memory) {
             return (RevertReasons.UnexpectedError, 0, 0, 0, 0, 1);
         } catch (bytes memory reason) {
             bytes4 receivedSelector = bytes4(reason);
@@ -220,6 +236,8 @@ library BinarySearchQuoter {
             // Error: PoolRebalanceOutOfBounds
             bytes4 expectedSelectorPoolRebalanceOutOfBounds = IAMOStrategy.PoolRebalanceOutOfBounds.selector;
             bytes4 expectedSelectorOutsideExpectedTickRange = IAMOStrategy.OutsideExpectedTickRange.selector;
+            bytes4 expectedSelectorNotEnoughWethForSwap = IAMOStrategy.NotEnoughWethForSwap.selector;
+            bytes4 expectedSelectorNotEnoughWethLiquidity = IAMOStrategy.NotEnoughWethLiquidity.selector;
             if (receivedSelector == expectedSelectorPoolRebalanceOutOfBounds) {
                 assembly ("memory-safe") {
                     currentPoolWethShare := mload(add(reason, 0x24))
@@ -240,6 +258,14 @@ library BinarySearchQuoter {
                 }
 
                 return (RevertReasons.NotInExpectedTickRange, 0, 0, _currentTick, _lowerTick, _upperTick);
+            }
+            // Error: NotEnoughWethForSwap
+            else if (receivedSelector == expectedSelectorNotEnoughWethForSwap) {
+                return (RevertReasons.NotEnoughWethForSwap, 0, 0, 0, 0, 0);
+            }
+            // Error: NotEnoughWethLiquidity
+            else if (receivedSelector == expectedSelectorNotEnoughWethLiquidity) {
+                return (RevertReasons.NotEnoughWethLiquidity, 0, 0, 0, 0, 0);
             }
             // Error: UnexpectedError
             else {
