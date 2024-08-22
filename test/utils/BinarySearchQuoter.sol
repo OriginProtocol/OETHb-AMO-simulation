@@ -134,8 +134,14 @@ library BinarySearchQuoter {
             uint256 mid = (low + high) / 2;
 
             // Get quote to get pool share after swapping `amount` and rebalancing
-            (RevertReasons reason, uint256 currentPoolWethShare, uint256 targetedPoolWethShare) =
-                getPoolShareAfterRebalance(mid, params.swapWETHForOETHB);
+            (
+                RevertReasons reason,
+                uint256 currentPoolWethShare,
+                uint256 targetedPoolWethShare,
+                int24 currentTick,
+                int24 lowerTick,
+                int24 upperTick
+            ) = getPoolShareAfterRebalance(mid, params.swapWETHForOETHB);
 
             // Best case, we found the `amount` that will reach the target pool share!
             if (reason == RevertReasons.Found) {
@@ -152,7 +158,17 @@ library BinarySearchQuoter {
             // Must be improve
             if (reason == RevertReasons.NotInExpectedTickRange) {
                 emit log_named_uint("Amount Wrong tick range: ", mid);
-                low = mid + 1;
+                // If we are buying OETHb and the current tick is greater than the lower tick, we need to increase the amount
+                // in order to continue to push price down.
+                // If we are selling OETHb and the current tick is less than the upper tick, we need to increase the amount
+                // in order to continue to push price up.
+                if (params.swapWETHForOETHB ? currentTick > lowerTick : currentTick < upperTick) {
+                    low = mid + 1;
+                }
+                // Else we need to decrease the amount
+                else {
+                    high = mid;
+                }
             }
 
             // If the pool is out of bounds, we need to adjust the amount to reach the target pool share
@@ -185,27 +201,49 @@ library BinarySearchQuoter {
 
     function getPoolShareAfterRebalance(uint256 amount, bool swapWETH)
         public
-        returns (RevertReasons, uint256 currentPoolWethShare, uint256 targetedPoolWethShare)
+        returns (
+            RevertReasons,
+            uint256 currentPoolWethShare,
+            uint256 targetedPoolWethShare,
+            int24 currentTick,
+            int24 lowerTick,
+            int24 upperTick
+        )
     {
         try strategy.rebalance(amount, swapWETH, 0) {
-            return (RevertReasons.Found, 1, 1);
+            return (RevertReasons.Found, 1, 1, 1, 1, 1);
         } catch Error(string memory reason) {
-            if (keccak256(bytes(reason)) == keccak256(bytes("Not in expected tick range"))) {
-                return (RevertReasons.NotInExpectedTickRange, 0, 0);
-            }
-            return (RevertReasons.UnexpectedError, 0, 0);
+            return (RevertReasons.UnexpectedError, 0, 0, 0, 0, 1);
         } catch (bytes memory reason) {
             bytes4 receivedSelector = bytes4(reason);
-            bytes4 expectedSelector = IAMOStrategy.PoolRebalanceOutOfBounds.selector;
 
-            if (receivedSelector == expectedSelector) {
+            // Error: PoolRebalanceOutOfBounds
+            bytes4 expectedSelectorPoolRebalanceOutOfBounds = IAMOStrategy.PoolRebalanceOutOfBounds.selector;
+            bytes4 expectedSelectorOutsideExpectedTickRange = IAMOStrategy.OutsideExpectedTickRange.selector;
+            if (receivedSelector == expectedSelectorPoolRebalanceOutOfBounds) {
                 assembly ("memory-safe") {
                     currentPoolWethShare := mload(add(reason, 0x24))
                     targetedPoolWethShare := mload(add(reason, 0x44))
                 }
-                return (RevertReasons.RebalanceOutOfBounds, currentPoolWethShare, targetedPoolWethShare);
-            } else {
-                return (RevertReasons.UnexpectedError, 0, 0);
+                return (RevertReasons.RebalanceOutOfBounds, currentPoolWethShare, targetedPoolWethShare, 0, 0, 0);
+            }
+            // Error: OutsideExpectedTickRange
+            else if (receivedSelector == expectedSelectorOutsideExpectedTickRange) {
+                int24 _currentTick;
+                int24 _lowerTick;
+                int24 _upperTick;
+
+                assembly {
+                    _currentTick := mload(add(reason, 0x24))
+                    _lowerTick := mload(add(reason, 0x44))
+                    _upperTick := mload(add(reason, 0x64))
+                }
+
+                return (RevertReasons.NotInExpectedTickRange, 0, 0, _currentTick, _lowerTick, _upperTick);
+            }
+            // Error: UnexpectedError
+            else {
+                return (RevertReasons.UnexpectedError, 0, 0, 0, 0, 0);
             }
         }
     }
