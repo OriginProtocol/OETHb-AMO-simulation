@@ -121,7 +121,13 @@ contract Simulation1 is Base_Simulations_ {
     function _simulation(uint256 share, uint256 amount) internal returns (uint256[] memory) {
         deal(address(oethb), address(this), amount);
         setPoolWethShare(share);
-        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
+        allocate();
+
+        uint256 id = vm.snapshot();
+        uint256 amount_ = amountOfWETHToSwapToReachPriceBeforeRebalance();
+        vm.revertToAndDelete(id);
+
+        rebalance(amount_, 0, true);
 
         withdrawAll();
 
@@ -137,11 +143,5 @@ contract Simulation1 is Base_Simulations_ {
 
         // Return values
         return results;
-    }
-
-    function test_Quoter_Rebalance() public {
-        deal(address(oethb), address(this), 20 ether);
-        allocate();
-        amountOfWETHToSwapToReachPriceBeforeRebalance();
     }
 }

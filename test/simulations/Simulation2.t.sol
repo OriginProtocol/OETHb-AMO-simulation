@@ -79,7 +79,12 @@ contract Simulation2A is Base_Simulations_ {
     function _simulation(uint256 share, uint256 amount) internal returns (uint256[] memory) {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
-        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
+        allocate();
+
+        uint256 id = vm.snapshot();
+        uint256 amount_ = amountOfWETHToSwapToReachPriceBeforeRebalance();
+        vm.revertToAndDelete(id);
+        rebalance(amount_, 0, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
@@ -176,7 +181,13 @@ contract Simulation2B is Base_Simulations_ {
     function _simulation(uint256 share, uint256 amount) internal returns (uint256[] memory) {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
-        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
+        allocate();
+
+        uint256 id = vm.snapshot();
+        uint256 amount_ = amountOfWETHToSwapToReachPriceBeforeRebalance();
+        vm.revertToAndDelete(id);
+
+        rebalance(amount_, 0, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
