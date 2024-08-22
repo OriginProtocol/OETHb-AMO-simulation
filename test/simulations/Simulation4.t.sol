@@ -202,7 +202,6 @@ contract Simulation4A is Base_Simulations_ {
         setPoolWethShare(ratio);
         allocate();
         rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
-        amountOfOETHbToSwapToReachPrice(true);
 
         // Buy OETHb to push price down
         swapWETHExactInput(amount, DEFAULT_PRICE_LIMITE_LOW, true);

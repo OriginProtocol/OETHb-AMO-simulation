@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+import {console} from "lib/forge-std/src/console.sol";
+
 // Base for simulation
 import {Base_Simulations_} from "test/simulations/BaseSimulation.sol";
 
@@ -29,7 +31,7 @@ contract Simulation5A is Base_Simulations_ {
         values[0][1] = 0.1 ether;
         values[1] = new uint256[](2); // Amounts
         values[1][0] = 20 ether; // Less than initial liquidity deposited
-        values[1][1] = 50 ether; // More than initial liquidity deposited
+        values[1][1] = 1500 ether; // More than initial liquidity deposited
         values[2] = new uint256[](4); // Ticks %
         values[2][0] = 1;
         values[2][1] = 10;
@@ -198,21 +200,20 @@ contract Simulation5A is Base_Simulations_ {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(ratio);
         allocate();
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         // Provide Liquiditity outside of current ticks
-        provideLiquidity(DEFAULT_INITIAL_DEPOSIT, DEFAULT_INITIAL_DEPOSIT, ticks, ticks + 1, true);
+        provideLiquidity(DEFAULT_INITIAL_DEPOSIT, DEFAULT_INITIAL_DEPOSIT, -ticks - 1, -ticks, true);
 
-        // Sell OETHb to move price in higher ticks
-        pool.slot0();
-        swapOETHbExactInput(amount, DEFAULT_PRICE_LIMITE_HIGH, true);
-        pool.slot0();
+        // Buy OETHb to push price down
+        swapWETHExactInput(amount, DEFAULT_PRICE_LIMITE_LOW, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
         // uint256 balanceBefore = vault.checkBalance();
 
-        // Try to rebalance, need to buy OETHb to reach the price
-        rebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
+        // Try to rebalance, need to sell OETHb to push the price up
+        rebalance(amountOfOETHbToSwapToReachPriceBeforeRebalance(), 0, false);
         withdrawAll();
 
         // Check values after
@@ -252,7 +253,7 @@ contract Simulation5B is Base_Simulations_ {
         values[0][1] = 0.1 ether;
         values[1] = new uint256[](2); // Amounts
         values[1][0] = 20 ether; // Less than initial liquidity deposited
-        values[1][1] = 50 ether; // More than initial liquidity deposited
+        values[1][1] = 40 ether; // More than initial liquidity deposited
         values[2] = new uint256[](4); // Ticks %
         values[2][0] = 1;
         values[2][1] = 10;
@@ -421,21 +422,24 @@ contract Simulation5B is Base_Simulations_ {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(ratio);
         allocate();
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         // Provide Liquiditity outside of current ticks
-        provideLiquidity(DEFAULT_INITIAL_DEPOSIT, DEFAULT_INITIAL_DEPOSIT, -ticks - 1, -ticks, true);
+        provideLiquidity(DEFAULT_INITIAL_DEPOSIT, DEFAULT_INITIAL_DEPOSIT, ticks, ticks + 1, true);
 
         // Sell OETHb to move price in higher ticks
-        pool.slot0();
-        swapWETHExactInput(amount, DEFAULT_PRICE_LIMITE_LOW, true);
-        pool.slot0();
+        (uint160 priceBefore,,,,,) = pool.slot0();
+        swapOETHbExactInput(amount, DEFAULT_PRICE_LIMITE_HIGH, true);
+        (uint160 priceAfter,,,,,) = pool.slot0();
+        console.log("Price Before AAAA: %d", priceBefore);
+        console.log("Price After AAAAA: %d", priceAfter);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
         // uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance, need to buy OETHb to reach the price
-        rebalance(amountOfOETHbToSwapToReachPrice(true), 0, false);
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
         withdrawAll();
 
         // Check values after
