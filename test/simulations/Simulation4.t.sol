@@ -198,25 +198,23 @@ contract Simulation4A is Base_Simulations_ {
         internal
         returns (uint256[] memory)
     {
-        deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
+        deal(address(oethb), address(this), amount);
         setPoolWethShare(ratio);
         allocate();
-        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
-        //rebalance(2700217571139457, 0, true);
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
+        amountOfOETHbToSwapToReachPrice(true);
 
-        // Buy OETHb to move a bit the price
+        // Buy OETHb to push price down
         swapWETHExactInput(amount, DEFAULT_PRICE_LIMITE_LOW, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
         // uint256 balanceBefore = vault.checkBalance();
 
-        // Try to rebalance, need to sell OETHb to reach the price
+        // Try to rebalance, need to sell OETHb to push the price up
         rebalance(amountOfOETHbToSwapToReachPriceBeforeRebalance(), 0, false);
 
-        //rebalance(amountOfOETHbToSwapToReachPrice(true), 0, false);
-
-        //withdrawAll();
+        withdrawAll();
 
         // Check values after
         uint256 balanceAfter = vault.totalValue();
@@ -255,7 +253,7 @@ contract Simulation4B is Base_Simulations_ {
         values[0][1] = 0.1 ether;
         values[1] = new uint256[](2); // Swap Amounts
         values[1][0] = 20 ether;
-        values[1][1] = 50 ether;
+        values[1][1] = 40 ether;
         values[2] = new uint256[](4); // Rebalance %
         values[2][0] = 75e16;
         values[2][1] = 80e16;
@@ -426,7 +424,8 @@ contract Simulation4B is Base_Simulations_ {
     {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(ratio);
-        allocateAndRebalance(amountOfWETHToSwapToReachPrice(true), 0, true);
+        allocate();
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         // Sell OETHb to move a bit the price
         swapOETHbExactInput(amount, DEFAULT_PRICE_LIMITE_HIGH, true);
