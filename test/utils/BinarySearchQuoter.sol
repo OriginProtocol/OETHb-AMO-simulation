@@ -160,11 +160,14 @@ library BinarySearchQuoter {
             // Must be improve
             if (reason == RevertReasons.NotInExpectedTickRange) {
                 emit log_named_uint("Amount Wrong tick range: ", mid);
+                emit log_named_int("Current tick: ", currentTick);
+                emit log_named_int("Lower tick: ", lowerTick);
+                emit log_named_int("Upper tick: ", upperTick);
                 // If we are buying OETHb and the current tick is greater than the lower tick, we need to increase the amount
                 // in order to continue to push price down.
                 // If we are selling OETHb and the current tick is less than the upper tick, we need to increase the amount
                 // in order to continue to push price up.
-                if (params.swapWETHForOETHB ? currentTick > lowerTick : currentTick < upperTick) {
+                if (params.swapWETHForOETHB ? currentTick < lowerTick : currentTick > upperTick) {
                     low = mid + 1;
                 }
                 // Else we need to decrease the amount
@@ -214,6 +217,7 @@ library BinarySearchQuoter {
     }
 
     event log_named_uint(string name, uint256 value);
+    event log_named_int(string name, int256 value);
 
     function getPoolShareAfterRebalance(uint256 amount, bool swapWETH)
         public
