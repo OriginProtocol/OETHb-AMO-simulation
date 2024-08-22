@@ -198,12 +198,7 @@ contract Simulation3A is Base_Simulations_ {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
         allocate();
-
-        uint256 id = vm.snapshot();
-        uint256 amount_ = amountOfWETHToSwapToReachPriceBeforeRebalance();
-        vm.revertToAndDelete(id);
-
-        rebalance(amount_, 0, true);
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
@@ -418,12 +413,7 @@ contract Simulation3B is Base_Simulations_ {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
         allocate();
-
-        uint256 id = vm.snapshot();
-        uint256 amount_ = amountOfWETHToSwapToReachPriceBeforeRebalance();
-        vm.revertToAndDelete(id);
-
-        rebalance(amount_, 0, true);
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();

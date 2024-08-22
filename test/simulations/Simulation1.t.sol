@@ -122,12 +122,7 @@ contract Simulation1 is Base_Simulations_ {
         deal(address(oethb), address(this), amount);
         setPoolWethShare(share);
         allocate();
-
-        uint256 id = vm.snapshot();
-        uint256 amount_ = amountOfWETHToSwapToReachPriceBeforeRebalance();
-        vm.revertToAndDelete(id);
-
-        rebalance(amount_, 0, true);
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         withdrawAll();
 

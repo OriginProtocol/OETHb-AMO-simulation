@@ -142,36 +142,50 @@ contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
     }
 
     function amountOfWETHToSwapToReachPriceBeforeRebalance() public returns (uint256) {
-        //vm.startPrank(strategy.governor());
+        // Snapshot the current state, as next call will modify it
+        uint256 id = vm.snapshot();
+
+        // Get the amount of OETHb to swap to reach target price before rebalance
+        // This will perform the effective rebalance, state needs to be reverted after!
         (uint256 amount, uint256 iterations) = BinarySearchQuoter.amountToSwapToReachTargetPriceBeforeRebalance(
             BinarySearchQuoter.BinarySearchQuoterParams({
                 swapWETHForOETHB: true,
                 targetPrice: 0, // Not needed here
                 sqrtPriceLimitX96: 0, // Not needed here
-                minAmount: 0.0000000001 ether,
-                maxAmount: 1 ether,
+                minAmount: DEFAULT_AMOUNT_TO_SWAP_START_MIN,
+                maxAmount: DEFAULT_AMOUNT_TO_SWAP_START_MAX,
                 allowedVariance: 0, // Not needed here
                 maxIterations: 50
             })
         );
+        // Revert to the previous state
+        vm.revertToAndDelete(id);
+
         console.log("Amount to swap: %18e", amount);
         console.log("Iterations: ", iterations);
         return (amount);
     }
 
     function amountOfOETHbToSwapToReachPriceBeforeRebalance() public returns (uint256) {
-        //vm.startPrank(strategy.governor());
+        // Snapshot the current state, as next call will modify it
+        uint256 id = vm.snapshot();
+
+        // Get the amount of OETHb to swap to reach target price before rebalance
+        // This will perform the effective rebalance, state needs to be reverted after!
         (uint256 amount, uint256 iterations) = BinarySearchQuoter.amountToSwapToReachTargetPriceBeforeRebalance(
             BinarySearchQuoter.BinarySearchQuoterParams({
                 swapWETHForOETHB: false,
                 targetPrice: 0, // Not needed here
                 sqrtPriceLimitX96: 0, // Not needed here
-                minAmount: 0.00001 ether,
-                maxAmount: 0.005 ether,
+                minAmount: DEFAULT_AMOUNT_TO_SWAP_START_MIN,
+                maxAmount: DEFAULT_AMOUNT_TO_SWAP_START_MAX,
                 allowedVariance: 0, // Not needed here
                 maxIterations: 20
             })
         );
+
+        // Revert to the previous state
+        vm.revertToAndDelete(id);
         console.log("Amount to swap: %18e", amount);
         console.log("Iterations: ", iterations);
         return (amount);
