@@ -167,7 +167,7 @@ library BinarySearchQuoter {
                 // in order to continue to push price down.
                 // If we are selling OETHb and the current tick is less than the upper tick, we need to increase the amount
                 // in order to continue to push price up.
-                if (params.swapWETHForOETHB ? currentTick < lowerTick : currentTick > upperTick) {
+                if (params.swapWETHForOETHB ? currentTick < lowerTick : currentTick < upperTick) {
                     low = mid + 1;
                 }
                 // Else we need to decrease the amount
@@ -199,6 +199,8 @@ library BinarySearchQuoter {
             // This error can happen, when initial value of mid is too high, so we need to decrease it
             if (reason == RevertReasons.NotEnoughWethForSwap) {
                 emit log_named_uint("Amount Not enough WETH: ", mid);
+                // currentPoolWethShare is the WETH balance
+                // targetedPoolWethShare is the amount of WETH we want to swap
                 high = mid;
             }
 
@@ -265,7 +267,11 @@ library BinarySearchQuoter {
             }
             // Error: NotEnoughWethForSwap
             else if (receivedSelector == expectedSelectorNotEnoughWethForSwap) {
-                return (RevertReasons.NotEnoughWethForSwap, 0, 0, 0, 0, 0);
+                assembly ("memory-safe") {
+                    currentPoolWethShare := mload(add(reason, 0x24)) // wethBalance
+                    targetedPoolWethShare := mload(add(reason, 0x44)) // wethAmount
+                }
+                return (RevertReasons.NotEnoughWethForSwap, currentPoolWethShare, targetedPoolWethShare, 0, 0, 0);
             }
             // Error: NotEnoughWethLiquidity
             else if (receivedSelector == expectedSelectorNotEnoughWethLiquidity) {
