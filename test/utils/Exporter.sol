@@ -6,7 +6,7 @@ import {Vm} from "forge-std/Vm.sol";
 library Exporter {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
-    function exportSimulation1(
+    function exportSimulation(
         string memory name, // JSON file name
         string[] memory inputs, // List of string corresponding to the inputs name
         uint256[][] memory params, // List containing list of value for each input

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+import {stdJson} from "lib/forge-std/src/StdJson.sol";
 import {console} from "lib/forge-std/src/console.sol";
 
 import {SafeCastLib} from "@solady/utils/SafeCastLib.sol";
@@ -12,8 +13,15 @@ import {Base_Pool_Actions_} from "test/PoolActions.sol";
 
 import {BinarySearchQuoter} from "test/utils/BinarySearchQuoter.sol";
 
-contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
+abstract contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
     using SafeCastLib for uint256;
+    using stdJson for string;
+
+    string public name;
+    string public jsonName;
+    string[] public inputsNames;
+    string[] public outputsNames;
+    uint256[][] public inputValues;
 
     ////////////////////////////////////////////////////////////////
     /// --- CONSTANTS & IMMUTABLES
@@ -26,6 +34,43 @@ contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
     uint256 public constant DEFAULT_AMOUNT_TO_SWAP_START_MAX = 100000 ether;
     uint256 public constant DEFAULT_INITIAL_DEPOSIT = 40 ether;
 
+    ////////////////////////////////////////////////////////////////
+    /// --- MODIFIERS
+    ////////////////////////////////////////////////////////////////
+    modifier revertStateAfter() {
+        uint256 id = vm.snapshot();
+        _;
+        require(vm.revertToAndDelete(id), "RevertToAndDelete failed");
+    }
+
+    ////////////////////////////////////////////////////////////////
+    /// --- INITIALIZATION
+    ////////////////////////////////////////////////////////////////
+    function init(string memory _jsonName) internal {
+        jsonName = _jsonName;
+        // Path to JSON file
+        string memory pathToJson =
+            string(abi.encodePacked(vm.projectRoot(), "/test/simulations/inputs/", jsonName, ".json"));
+
+        // Read whole JSON file
+        string memory json = vm.readFile(pathToJson);
+
+        // Fetch simulation name
+        name = json.readString("$.name");
+
+        // Fecth inputs names
+        inputsNames = json.readStringArray("$.inputs_names");
+
+        // Fetch inputs values
+        inputValues = new uint256[][](inputsNames.length);
+        for (uint256 i = 0; i < inputsNames.length; i++) {
+            inputValues[i] = json.readUintArray(string(abi.encodePacked("$.inputs.", string(inputsNames[i]))));
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////
+    /// --- HELPER FUNCTIONS
+    ////////////////////////////////////////////////////////////////
     function amountOfWETHToSwapToReachPrice(bool display) public returns (uint256) {
         (uint160 priceBefore,,,,,) = pool.slot0();
         uint160 targetPrice = getTargetPrice();
@@ -134,7 +179,6 @@ contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
         return (amount);
     }
 
-    //00.002700217571139457
     function getTargetPrice() public view returns (uint160) {
         uint256 share = strategy.poolWethShare();
         return (
@@ -143,6 +187,9 @@ contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
         ) / 1e18;
     }
 
+    ////////////////////////////////////////////////////////////////
+    /// --- MATH FUNCTIONS
+    ////////////////////////////////////////////////////////////////
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
