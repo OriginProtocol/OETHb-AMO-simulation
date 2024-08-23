@@ -198,24 +198,23 @@ contract Simulation6A is Base_Simulations_ {
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(ratio);
         allocate();
+        rebalance(amountOfWETHToSwapToReachPriceBeforeRebalance(), 0, true);
 
         // Provide Liquiditity outside of current ticks
         provideLiquidity(DEFAULT_INITIAL_DEPOSIT, DEFAULT_INITIAL_DEPOSIT, -ticks - 1, -ticks, true);
 
-        // Push price to new ticks, but buying 10% more than the initial liquidity deposited.
-        //_buyOETHb(DEFAULT_LIQUIDITY_DEPOSIT * (ratio * 110 / 100) / 1e9, -ticks - 1);
+        // Push price to new ticks
         swapWETHExactInput(DEFAULT_INITIAL_DEPOSIT, DEFAULT_PRICE_LIMITE_LOW, true);
 
-        // Provide WETH liquidity between ticks 0 and 1.
-        //_provideLiquidity(amount, 1, 0, 1);
-        provideLiquidity(DEFAULT_INITIAL_DEPOSIT, DEFAULT_INITIAL_DEPOSIT, DEFAULT_LOWER_TICK, DEFAULT_UPPER_TICK, true);
+        // Provide WETH liquidity between ticks -1 and 0.
+        provideLiquidity(amount, amount, DEFAULT_LOWER_TICK, DEFAULT_UPPER_TICK, true);
 
         // Check values before
         // uint256 totalSupplyBefore = oethb.totalSupply();
         // uint256 balanceBefore = vault.checkBalance();
 
         // Try to rebalance, need to buy OETHb to reach the price
-        rebalance(amountOfOETHbToSwapToReachPrice(true), 0, false);
+        rebalance(amountOfOETHbToSwapToReachPriceBeforeRebalance(), 0, false);
         withdrawAll();
 
         // Check values after

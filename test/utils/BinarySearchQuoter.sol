@@ -167,7 +167,7 @@ library BinarySearchQuoter {
                 // in order to continue to push price down.
                 // If we are selling OETHb and the current tick is less than the upper tick, we need to increase the amount
                 // in order to continue to push price up.
-                if (params.swapWETHForOETHB ? currentTick < lowerTick : currentTick < upperTick) {
+                if (params.swapWETHForOETHB ? currentTick > lowerTick : currentTick < upperTick) {
                     low = mid + 1;
                 }
                 // Else we need to decrease the amount
