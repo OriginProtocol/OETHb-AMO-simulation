@@ -2,28 +2,10 @@
 PYTHON = python3
 VENV_DIR = venv
 SCRIPT_DIR = script
-SCRIPT = simulation1.py
-SCRIPT2A = simulation2A.py
-SCRIPT2B = simulation2B.py
-SCRIPT3A = simulation3A.py
-SCRIPT3B = simulation3B.py
-SCRIPT4A = simulation4A.py
-SCRIPT4B = simulation4B.py
-SCRIPT5A = simulation5A.py
-SCRIPT5B = simulation5B.py
-SCRIPT6A = simulation6A.py
+
 DATA_DIR = data
 GRAPHS_DIR = $(DATA_DIR)/graphs
-JSON_FILE1 = Simulation1.json
-JSON_FILE2A = Simulation2A.json
-JSON_FILE2B = Simulation2B.json
-JSON_FILE3A = Simulation3A.json
-JSON_FILE3B = Simulation3B.json
-JSON_FILE4A = Simulation4A.json
-JSON_FILE4B = Simulation4B.json
-JSON_FILE5A = Simulation5A.json
-JSON_FILE5B = Simulation5B.json
-JSON_FILE6A = Simulation6A.json
+
 
 all:
 	@$(MAKE) tests
@@ -37,77 +19,77 @@ tests:
 graphs: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for all simulations ..."
 	@. $(VENV_DIR)/bin/activate && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT) $(DATA_DIR)/$(JSON_FILE1) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT2A) $(DATA_DIR)/$(JSON_FILE2A) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT2B) $(DATA_DIR)/$(JSON_FILE2B) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT3A) $(DATA_DIR)/$(JSON_FILE3A) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT3B) $(DATA_DIR)/$(JSON_FILE3B) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4A) $(DATA_DIR)/$(JSON_FILE4A) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4B) $(DATA_DIR)/$(JSON_FILE4B) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT5A) $(DATA_DIR)/$(JSON_FILE5A) && \
-	$(PYTHON) $(SCRIPT_DIR)/$(SCRIPT5B) $(DATA_DIR)/$(JSON_FILE5B)
-	@echo "Graphs generated successfully for Simulation1!"
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount.py $(DATA_DIR)/Simulation1.json && \
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount.py $(DATA_DIR)/Simulation2A.json && \
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount.py $(DATA_DIR)/Simulation2B.json && \
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation3A.json && \
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation3B.json && \
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation5A.json && \
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation5B.json && \
+	$(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation6A.json
+	@echo "Graphs generated successfully for all simulations!"
 
 
 # Generate graphs target for Simulation1
 simulation1: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for Simulation1..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT) $(DATA_DIR)/$(JSON_FILE1)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount.py $(DATA_DIR)/Simulation1.json
 	@echo "Graphs generated successfully for Simulation1!"
 
 # Generate graphs target for Simulation2A
 simulation2A: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for Simulation2A..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT2A) $(DATA_DIR)/$(JSON_FILE2A)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount.py $(DATA_DIR)/Simulation2A.json
 	@echo "Graphs generated successfully for Simulation2A!"
 
 # Generate graphs target for simulation2B
 simulation2B: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation2B..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT2B) $(DATA_DIR)/$(JSON_FILE2B)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount.py $(DATA_DIR)/Simulation2B.json
 	@echo "Graphs generated successfully for simulation2B!"
 
 # Generate graphs target for simulation3A
 simulation3A: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation3A..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT3A) $(DATA_DIR)/$(JSON_FILE3A)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation3A.json
 	@echo "Graphs generated successfully for simulation3A!"
 
 # Generate graphs target for simulation3B
 simulation3B: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation3B..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT3B) $(DATA_DIR)/$(JSON_FILE3B)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation3B.json
 	@echo "Graphs generated successfully for simulation3B!"
 
 # Generate graphs target for simulation4A
-simulation4A: $(VENV_DIR)/bin/activate
-	@echo "Generating graphs for simulation4A..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4A) $(DATA_DIR)/$(JSON_FILE4A)
-	@echo "Graphs generated successfully for simulation4A!"
+#simulation4A: $(VENV_DIR)/bin/activate
+#	@echo "Generating graphs for simulation4A..."
+#	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4A) $(DATA_DIR)/Simulation4A.json
+#	@echo "Graphs generated successfully for simulation4A!"
 
 # Generate graphs target for simulation4B
-simulation4B: $(VENV_DIR)/bin/activate
-	@echo "Generating graphs for simulation4B..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4B) $(DATA_DIR)/$(JSON_FILE4B)
-	@echo "Graphs generated successfully for simulation4B!"
+#simulation4B: $(VENV_DIR)/bin/activate
+#	@echo "Generating graphs for simulation4B..."
+#	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT4B) $(DATA_DIR)/Simulation4B.json
+#	@echo "Graphs generated successfully for simulation4B!"
 
 # Generate graphs target for simulation5A
 simulation5A: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation5A..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT5A) $(DATA_DIR)/$(JSON_FILE5A)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation5A.json
 	@echo "Graphs generated successfully for simulation5A!"
 
 # Generate graphs target for simulation5B
 simulation5B: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation5B..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT5B) $(DATA_DIR)/$(JSON_FILE5B)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation5B.json
 	@echo "Graphs generated successfully for simulation5B!"
 
 # Generate graphs target for simulation6A
 simulation6A: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation6A..."
-	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/$(SCRIPT6A) $(DATA_DIR)/$(JSON_FILE6A)
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_ratio_amount_tick.py  $(DATA_DIR)/Simulation6A.json
 	@echo "Graphs generated successfully for simulation6A!"
+
 
 # Create virtual environment target
 $(VENV_DIR)/bin/activate: requirements.txt
