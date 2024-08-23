@@ -12,6 +12,7 @@ remappings = [
 ]
 ffi = true
 fs_permissions = [{ access = "read-write", path = "./"}]
+gas_limit = 107374182400000 # *100000 the default value
 
 
 [etherscan]
