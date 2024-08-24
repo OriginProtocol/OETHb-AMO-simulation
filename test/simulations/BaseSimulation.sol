@@ -12,10 +12,12 @@ import {Base_AMO_Actions_} from "test/AMOActions.sol";
 import {Base_Pool_Actions_} from "test/PoolActions.sol";
 
 import {BinarySearchQuoter} from "test/utils/BinarySearchQuoter.sol";
+import {Exporter} from "test/utils/Exporter.sol";
 
 abstract contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
     using SafeCastLib for uint256;
     using stdJson for string;
+    using Exporter for string;
 
     string public name;
     string public jsonName;
@@ -66,6 +68,19 @@ abstract contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
         for (uint256 i = 0; i < inputsNames.length; i++) {
             inputValues[i] = json.readUintArray(string(abi.encodePacked("$.inputs.", string(inputsNames[i]))));
         }
+    }
+
+    ////////////////////////////////////////////////////////////////
+    /// --- SIMULATION
+    ////////////////////////////////////////////////////////////////
+    /// @notice Export result from the simulation and revert the state to before the simulation
+    function _simulateAndExport(uint256[] memory params) internal revertStateAfter {
+        name.exportSimulation(inputsNames, inputValues, params, outputsNames, _simulation(params));
+    }
+
+    /// @notice Simulation function, this is where all the scenario is executed
+    function _simulation(uint256[] memory params) internal virtual returns (uint256[] memory) {
+        // To be implemented in the child contract
     }
 
     ////////////////////////////////////////////////////////////////

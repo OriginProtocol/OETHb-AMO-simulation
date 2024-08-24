@@ -45,7 +45,12 @@ contract Simulation3A is Base_Simulations_ {
     /// --- SIMULATION
     ////////////////////////////////////////////////////////////////
     /// @notice Simulation function, this is where all the scenario is executed
-    function _simulation(uint256 share, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
+    function _simulation(uint256[] memory params) internal override returns (uint256[] memory) {
+        require(params.length == 3, "Invalid params length");
+        uint256 share = params[0];
+        uint256 amount = params[1];
+        int24 ticks = int24(int256(params[2]));
+
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
         allocate();
@@ -70,13 +75,6 @@ contract Simulation3A is Base_Simulations_ {
 
         // Return values
         return results;
-    }
-
-    /// @notice Export result from the simulation and revert the state to before the simulation
-    function _simulateAndExport(uint256[] memory params) public revertStateAfter {
-        name.exportSimulation(
-            inputsNames, inputValues, params, outputsNames, _simulation(params[0], params[1], int24(int256(params[2])))
-        );
     }
 }
 
@@ -118,7 +116,12 @@ contract Simulation3B is Base_Simulations_ {
     /// --- SIMULATION
     ////////////////////////////////////////////////////////////////
     /// @notice Simulation function, this is where all the scenario is executed
-    function _simulation(uint256 share, uint256 amount, int24 ticks) internal returns (uint256[] memory) {
+    function _simulation(uint256[] memory params) internal override returns (uint256[] memory) {
+        require(params.length == 3, "Invalid params length");
+        uint256 share = params[0];
+        uint256 amount = params[1];
+        int24 ticks = int24(int256(params[2]));
+
         deal(address(oethb), address(this), DEFAULT_INITIAL_DEPOSIT);
         setPoolWethShare(share);
         allocate();
@@ -143,12 +146,5 @@ contract Simulation3B is Base_Simulations_ {
 
         // Return values
         return results;
-    }
-
-    /// @notice Export result from the simulation and revert the state to before the simulation
-    function _simulateAndExport(uint256[] memory params) public revertStateAfter {
-        name.exportSimulation(
-            inputsNames, inputValues, params, outputsNames, _simulation(params[0], params[1], int24(int256(params[2])))
-        );
     }
 }
