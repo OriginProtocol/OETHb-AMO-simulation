@@ -48,6 +48,7 @@ requirements.txt:
 # Clean target
 clean:
 	@echo "Cleaning up..."
+	@forge clean
 	@rm -rf $(DATA_DIR) $(VENV_DIR) requirements.txt
 	@echo "Cleanup completed!"
 
