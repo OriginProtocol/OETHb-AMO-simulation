@@ -8,11 +8,17 @@ GRAPHS_DIR = $(DATA_DIR)/graphs
 # List of all simulations
 SIMULATIONS = 1 2A 2B 3A 3B 5A 5B 6A
 
-all: tests graphs
+all: test graphs
 
-tests:
+test:
 	mkdir -p $(DATA_DIR)
-	@forge test --summary -v
+	@forge test --summary 
+
+test-f-%:
+	@FOUNDRY_MATCH_TEST=$* make test
+
+test-c-%:
+	@FOUNDRY_MATCH_CONTRACT=$* make test
 
 # Default target to run all simulations
 graphs: $(VENV_DIR)/bin/activate $(addprefix sim-,$(SIMULATIONS))
@@ -61,4 +67,4 @@ help:
 	@echo "  clean           - Clean up generated graphs and virtual environment"
 	@echo "  help            - Show this help message"
 
-.PHONY: all tests graphs clean help $(addprefix sim-,$(SIMULATIONS))
+.PHONY: all tests test graphs clean help $(addprefix sim-,$(SIMULATIONS))
