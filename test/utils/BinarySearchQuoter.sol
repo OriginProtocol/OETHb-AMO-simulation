@@ -7,12 +7,9 @@ import {ISugarHelper} from "test/interfaces/ISugarHelper.sol";
 import {IAMOStrategy} from "test/interfaces/IAMOStrategy.sol";
 
 library BinarySearchQuoter {
-    int24 private constant TICK_SPACING = 1;
-    uint256 private constant PERCENTAGE_BASE = 1e27; // 100%
-    IQuoterV2 private constant quoter = IQuoterV2(Base.QUOTERV2);
-    IAMOStrategy private constant strategy = IAMOStrategy(Base.AMO_STRATEGY);
-    ISugarHelper private constant sugarHelper = ISugarHelper(Base.SUGAR_HELPER);
-
+    ////////////////////////////////////////////////////////////////
+    /// --- STRUCTS & ENUMS
+    ////////////////////////////////////////////////////////////////
     struct BinarySearchQuoterParams {
         bool swapWETHForOETHB;
         uint256 targetPrice;
@@ -46,6 +43,27 @@ library BinarySearchQuoter {
         Found
     }
 
+    ////////////////////////////////////////////////////////////////
+    /// --- CONSTANTS
+    ////////////////////////////////////////////////////////////////
+    int24 private constant DEFAULT_LOWER_TICK = -1;
+    int24 private constant DEFAULT_UPPER_TICK = 0;
+    int24 private constant TICK_SPACING = 1;
+    uint256 private constant PERCENTAGE_BASE = 1e27; // 100%
+    IQuoterV2 private constant quoter = IQuoterV2(Base.QUOTERV2);
+    IAMOStrategy private constant strategy = IAMOStrategy(Base.AMO_STRATEGY);
+    ISugarHelper private constant sugarHelper = ISugarHelper(Base.SUGAR_HELPER);
+
+    ////////////////////////////////////////////////////////////////
+    /// --- EVENTS
+    ////////////////////////////////////////////////////////////////
+    event log_named_uint(string name, uint256 value);
+    event log_named_int(string name, int256 value);
+
+    ////////////////////////////////////////////////////////////////
+    /// --- INVERTED QUOTER FOR SWAP
+    ////////////////////////////////////////////////////////////////
+    /// @notice Get the amount of token to swap to reach the target price
     function amountToSwapToReachPrice(BinarySearchQuoterParams memory params)
         external
         returns (uint256, uint160, uint256)
@@ -63,7 +81,7 @@ library BinarySearchQuoter {
         while (state.low <= state.high && state.iterations < params.maxIterations) {
             uint256 mid = (state.low + state.high) / 2;
 
-            uint160 sqrtPriceX96After = getPriceAfter(
+            uint160 sqrtPriceX96After = _getPriceAfter(
                 quoter,
                 quoteParams.tokenIn,
                 quoteParams.tokenOut,
@@ -74,7 +92,7 @@ library BinarySearchQuoter {
 
             if (
                 state.low == state.high
-                    || isWithinAllowedVariance(sqrtPriceX96After, params.targetPrice, params.allowedVariance)
+                    || _isWithinAllowedVariance(sqrtPriceX96After, params.targetPrice, params.allowedVariance)
             ) {
                 return (mid, sqrtPriceX96After, state.iterations);
             } else if (
@@ -92,7 +110,8 @@ library BinarySearchQuoter {
         revert("Quoter: max iterations reached");
     }
 
-    function getPriceAfter(
+    /// @notice Helper that returns the price after swapping `amount` of `tokenIn` for `tokenOut`
+    function _getPriceAfter(
         IQuoterV2 _quoter,
         address _tokenIn,
         address _tokenOut,
@@ -111,7 +130,8 @@ library BinarySearchQuoter {
         return sqrtPriceX96After;
     }
 
-    function isWithinAllowedVariance(uint256 currentPrice, uint256 targetPrice, uint256 allowedVariancePercentage)
+    /// @notice Helper that checks if the current price is within the allowed variance
+    function _isWithinAllowedVariance(uint256 currentPrice, uint256 targetPrice, uint256 allowedVariancePercentage)
         private
         pure
         returns (bool)
@@ -124,6 +144,13 @@ library BinarySearchQuoter {
         }
     }
 
+    ////////////////////////////////////////////////////////////////
+    /// --- INVERTED QUOTER FOR SWAP BEFORE REBALANCE
+    ////////////////////////////////////////////////////////////////
+    /// @notice Get the amount of token to swap to reach the target price before rebalance
+    /// @dev This quoter is home made and actually performs a binary search to find the amount of token to swap
+    /// @dev but the last transaction is NOT reverted, this means that the pool will be in an invalid state. 
+    /// @dev Use forge `vm.snapshot()` and `vm.revertToAndDelete()` to revert the state after using this function. 
     function amountToSwapToReachTargetPriceBeforeRebalance(BinarySearchQuoterParams memory params)
         public
         returns (uint256, uint256)
@@ -139,11 +166,10 @@ library BinarySearchQuoter {
             (
                 RevertReasons reason,
                 uint256 currentPoolWethShare,
-                uint256 targetedPoolWethShare,
-                int24 currentTick,
-                int24 lowerTick,
-                int24 upperTick
-            ) = getPoolShareAfterRebalance(mid, params.swapWETHForOETHB);
+                uint256 allowedWethShareStart,
+                uint256 allowedWethShareEnd,
+                int24 currentTick
+            ) = _getPoolShareAfterRebalance(mid, params.swapWETHForOETHB);
 
             // Best case, we found the `amount` that will reach the target pool share!
             if (reason == RevertReasons.Found) {
@@ -161,13 +187,13 @@ library BinarySearchQuoter {
             if (reason == RevertReasons.NotInExpectedTickRange) {
                 emit log_named_uint("Amount Wrong tick range: ", mid);
                 emit log_named_int("Current tick: ", currentTick);
-                emit log_named_int("Lower tick: ", lowerTick);
-                emit log_named_int("Upper tick: ", upperTick);
+                emit log_named_int("Lower tick: ", DEFAULT_LOWER_TICK);
+                emit log_named_int("Upper tick: ", DEFAULT_UPPER_TICK);
                 // If we are buying OETHb and the current tick is greater than the lower tick, we need to increase the amount
                 // in order to continue to push price down.
                 // If we are selling OETHb and the current tick is less than the upper tick, we need to increase the amount
                 // in order to continue to push price up.
-                if (params.swapWETHForOETHB ? currentTick > lowerTick : currentTick < upperTick) {
+                if (params.swapWETHForOETHB ? currentTick > DEFAULT_LOWER_TICK : currentTick < DEFAULT_UPPER_TICK) {
                     low = mid + 1;
                 }
                 // Else we need to decrease the amount
@@ -180,12 +206,13 @@ library BinarySearchQuoter {
             if (reason == RevertReasons.RebalanceOutOfBounds) {
                 emit log_named_uint("Amount Reverted: ", mid);
                 emit log_named_uint("Current pool share Reverted : ", currentPoolWethShare);
-                emit log_named_uint("Targeted pool share Reverted: ", targetedPoolWethShare);
+                emit log_named_uint("Allowed WETH Share Start: ", allowedWethShareStart);
+                emit log_named_uint("Allowed WETH Share End: ", allowedWethShareEnd);
                 // If the current pool share is less than the target pool share, we need to increase the amount
                 if (
                     params.swapWETHForOETHB
-                        ? currentPoolWethShare < targetedPoolWethShare
-                        : currentPoolWethShare > targetedPoolWethShare
+                        ? currentPoolWethShare < allowedWethShareStart
+                        : currentPoolWethShare > allowedWethShareEnd
                 ) {
                     low = mid + 1;
                 }
@@ -218,24 +245,21 @@ library BinarySearchQuoter {
         revert("Quoter: max iterations reached");
     }
 
-    event log_named_uint(string name, uint256 value);
-    event log_named_int(string name, int256 value);
-
-    function getPoolShareAfterRebalance(uint256 amount, bool swapWETH)
+    /// @notice Get the pool share after rebalancing, using try and catch method, analysing the revert reason
+    function _getPoolShareAfterRebalance(uint256 amount, bool swapWETH)
         public
         returns (
             RevertReasons,
             uint256 currentPoolWethShare,
-            uint256 targetedPoolWethShare,
-            int24 currentTick,
-            int24 lowerTick,
-            int24 upperTick
+            uint256 allowedWethShareStart,
+            uint256 allowedWethShareEnd,
+            int24 currentTick
         )
     {
         try strategy.rebalance(amount, swapWETH, 0) {
-            return (RevertReasons.Found, 1, 1, 1, 1, 1);
+            return (RevertReasons.Found, 1, 1, 1, 1);
         } catch Error(string memory) {
-            return (RevertReasons.UnexpectedError, 0, 0, 0, 0, 1);
+            return (RevertReasons.UnexpectedError, 0, 0, 0, 0);
         } catch (bytes memory reason) {
             bytes4 receivedSelector = bytes4(reason);
 
@@ -244,42 +268,46 @@ library BinarySearchQuoter {
             bytes4 expectedSelectorOutsideExpectedTickRange = IAMOStrategy.OutsideExpectedTickRange.selector;
             bytes4 expectedSelectorNotEnoughWethForSwap = IAMOStrategy.NotEnoughWethForSwap.selector;
             bytes4 expectedSelectorNotEnoughWethLiquidity = IAMOStrategy.NotEnoughWethLiquidity.selector;
+
             if (receivedSelector == expectedSelectorPoolRebalanceOutOfBounds) {
                 assembly ("memory-safe") {
                     currentPoolWethShare := mload(add(reason, 0x24))
-                    targetedPoolWethShare := mload(add(reason, 0x44))
+                    allowedWethShareStart := mload(add(reason, 0x44))
+                    allowedWethShareEnd := mload(add(reason, 0x64))
                 }
-                return (RevertReasons.RebalanceOutOfBounds, currentPoolWethShare, targetedPoolWethShare, 0, 0, 0);
+                return (
+                    RevertReasons.RebalanceOutOfBounds,
+                    currentPoolWethShare,
+                    allowedWethShareStart,
+                    allowedWethShareEnd,
+                    0
+                );
             }
             // Error: OutsideExpectedTickRange
             else if (receivedSelector == expectedSelectorOutsideExpectedTickRange) {
                 int24 _currentTick;
-                int24 _lowerTick;
-                int24 _upperTick;
 
                 assembly {
                     _currentTick := mload(add(reason, 0x24))
-                    _lowerTick := mload(add(reason, 0x44))
-                    _upperTick := mload(add(reason, 0x64))
                 }
 
-                return (RevertReasons.NotInExpectedTickRange, 0, 0, _currentTick, _lowerTick, _upperTick);
+                return (RevertReasons.NotInExpectedTickRange, 0, 0, 0, _currentTick);
             }
             // Error: NotEnoughWethForSwap
             else if (receivedSelector == expectedSelectorNotEnoughWethForSwap) {
                 assembly ("memory-safe") {
                     currentPoolWethShare := mload(add(reason, 0x24)) // wethBalance
-                    targetedPoolWethShare := mload(add(reason, 0x44)) // wethAmount
+                    allowedWethShareStart := mload(add(reason, 0x44)) // wethAmount
                 }
-                return (RevertReasons.NotEnoughWethForSwap, currentPoolWethShare, targetedPoolWethShare, 0, 0, 0);
+                return (RevertReasons.NotEnoughWethForSwap, currentPoolWethShare, allowedWethShareStart, 0, 0);
             }
             // Error: NotEnoughWethLiquidity
             else if (receivedSelector == expectedSelectorNotEnoughWethLiquidity) {
-                return (RevertReasons.NotEnoughWethLiquidity, 0, 0, 0, 0, 0);
+                return (RevertReasons.NotEnoughWethLiquidity, 0, 0, 0, 0);
             }
             // Error: UnexpectedError
             else {
-                return (RevertReasons.UnexpectedError, 0, 0, 0, 0, 0);
+                return (RevertReasons.UnexpectedError, 0, 0, 0, 0);
             }
         }
     }
