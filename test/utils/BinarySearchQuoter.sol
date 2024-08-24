@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 
+import {Vm} from "lib/forge-std/src/Vm.sol";
 import {Base} from "test/utils/Addresses.sol";
 import {IQuoterV2} from "test/interfaces/IQuoter.sol";
 import {ISugarHelper} from "test/interfaces/ISugarHelper.sol";
@@ -53,6 +54,8 @@ library BinarySearchQuoter {
     IQuoterV2 private constant quoter = IQuoterV2(Base.QUOTERV2);
     IAMOStrategy private constant strategy = IAMOStrategy(Base.AMO_STRATEGY);
     ISugarHelper private constant sugarHelper = ISugarHelper(Base.SUGAR_HELPER);
+
+    Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     ////////////////////////////////////////////////////////////////
     /// --- EVENTS
@@ -149,8 +152,8 @@ library BinarySearchQuoter {
     ////////////////////////////////////////////////////////////////
     /// @notice Get the amount of token to swap to reach the target price before rebalance
     /// @dev This quoter is home made and actually performs a binary search to find the amount of token to swap
-    /// @dev but the last transaction is NOT reverted, this means that the pool will be in an invalid state. 
-    /// @dev Use forge `vm.snapshot()` and `vm.revertToAndDelete()` to revert the state after using this function. 
+    /// @dev but the last transaction is NOT reverted, this means that the pool will be in an invalid state.
+    /// @dev Use forge `vm.snapshot()` and `vm.revertToAndDelete()` to revert the state after using this function.
     function amountToSwapToReachTargetPriceBeforeRebalance(BinarySearchQuoterParams memory params)
         public
         returns (uint256, uint256)
@@ -256,6 +259,7 @@ library BinarySearchQuoter {
             int24 currentTick
         )
     {
+        vm.prank(strategy.governor());
         try strategy.rebalance(amount, swapWETH, 0) {
             return (RevertReasons.Found, 1, 1, 1, 1);
         } catch Error(string memory) {
