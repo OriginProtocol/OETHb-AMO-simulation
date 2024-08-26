@@ -27,6 +27,12 @@ graphs: $(VENV_DIR)/bin/activate $(addprefix sim-,$(SIMULATIONS))
 # Function to determine which script to use
 sim_script = $(if $(filter 3A 3B 5A 5B 6A,$1),simulation_ratio_amount_tick.py,simulation_ratio_amount.py)
 
+# Generate graphs target for simulation4B
+simulation7: $(VENV_DIR)/bin/activate
+	@echo "Generating graphs for simulation7.."
+	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_7.py
+	@echo "Graphs generated successfully for simulation4B!"
+
 # Generate explicit targets for each simulation
 define simulation_target
 sim-$(1): $$(VENV_DIR)/bin/activate

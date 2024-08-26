@@ -12,6 +12,7 @@ import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 import {ICLPool} from "test/interfaces/ICLPool.sol";
 import {ICLGauge} from "test/interfaces/ICLGauge.sol";
 import {ISwapRouter} from "test/interfaces/ISwapRouter.sol";
+import {ISugarHelper} from "test/interfaces/ISugarHelper.sol";
 import {INonfungiblePositionManager} from "test/interfaces/INonfungiblePositionManager.sol";
 
 // Interfaces -- AMO
@@ -41,6 +42,7 @@ abstract contract Base_Test_ is Test {
     ICLGauge public gauge;
     IQuoterV2 public quoter;
     ISwapRouter public swapRouter;
+    ISugarHelper public sugarHelper;
     INonfungiblePositionManager public nftManager;
 
     // AMO
@@ -64,6 +66,7 @@ abstract contract Base_Test_ is Test {
         gauge = ICLGauge(payable(pool.gauge()));
         nftManager = INonfungiblePositionManager(payable(pool.nft()));
         quoter = IQuoterV2(Base.QUOTERV2);
+        sugarHelper = ISugarHelper(Base.SUGAR_HELPER);
 
         // 4. Fetch AMO Strategy
         vault = IVault(strategy.vaultAddress());
@@ -96,6 +99,7 @@ abstract contract Base_Test_ is Test {
         vm.label(address(vault), "VAULT OETHb");
         vm.label(address(strategy), "AMOStrategy");
         vm.label(address(nftManager), "NFTManager");
+        vm.label(address(Base.SUGAR_HELPER), "SugarHelper");
         vm.label(address(Base.AMO_STRATEGY_IMPL), "AMOStrategyImpl");
     }
 

@@ -8,7 +8,8 @@ abstract contract Base_AMO_Actions_ is Base_Test_ {
     ////////////////////////////////////////////////////////////////
     /// --- CONSTANTS
     ////////////////////////////////////////////////////////////////
-    uint256 public constant DEVIANCE_FROM_TARGET_SHARE = 5; // %
+    uint256 public constant BASE_PERCENTAGE = 1 ether; // 100%
+    uint256 public constant DEVIANCE_FROM_TARGET_SHARE = 1e12; // 0.001%
 
     ////////////////////////////////////////////////////////////////
     /// --- VAULT ACTIONS
@@ -37,8 +38,8 @@ abstract contract Base_AMO_Actions_ is Base_Test_ {
 
     /// @notice Set the `allowedWethShareStart` and `allowedWethShareEnd` as a percentage of the pool's WETH share
     function setPoolWethShare(uint256 share) public {
-        uint256 _allowedWethShareStart = share * (100 - DEVIANCE_FROM_TARGET_SHARE) / 100;
-        uint256 _allowedWethShareEnd = share * (100 + DEVIANCE_FROM_TARGET_SHARE) / 100;
+        uint256 _allowedWethShareStart = share * (BASE_PERCENTAGE - DEVIANCE_FROM_TARGET_SHARE) / BASE_PERCENTAGE;
+        uint256 _allowedWethShareEnd = share * (BASE_PERCENTAGE + DEVIANCE_FROM_TARGET_SHARE) / BASE_PERCENTAGE;
         setAllowedPoolWethShareInterval(_allowedWethShareStart, _allowedWethShareEnd);
     }
 

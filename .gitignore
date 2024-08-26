@@ -10,6 +10,7 @@ data/
 venv
 requirements.txt
 script/graphs
+test/simulations/inputs/Simulation7.json
 .DS_Store
 # Docs
 docs/

@@ -194,8 +194,8 @@ abstract contract Base_Simulations_ is Base_AMO_Actions_, Base_Pool_Actions_ {
         return (amount);
     }
 
-    function getTargetPrice() public view returns (uint160) {
-        uint256 share = strategy.poolWethShare();
+    function getTargetPrice() public pure returns (uint160) {
+        uint256 share = 0.2 ether;
         return (
             TickMath.getSqrtRatioAtTick(-1) * share.toUint160()
                 + TickMath.getSqrtRatioAtTick(0) * (1e18 - share).toUint160()
