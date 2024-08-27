@@ -24,7 +24,6 @@ fig, axes = plt.subplots(figsize=(18,8))
 
 diff = [(outputs["VaultBalanceAfter"][str(price)] - outputs["TotalSupplyAfter"][str(price)])/float(1e18) for price in data["inputs"]["Price"]]
 ticks = [price_to_tick(price) for price in data["inputs"]["Price"]]
-print(ticks)
 
 axes.plot(ticks, diff, label="Price", marker="o", markersize=4)
 axes.set_title("Benefit after rebalancing from price at tick", fontsize=12)
@@ -35,11 +34,10 @@ axes.set_xlabel("Tick", fontsize=8)
 axes.grid(True, which="both", linestyle="--", alpha=0.5)  # Add grid
 axes.axvline(x=-0.2, color="red", linestyle="--", alpha=0.5)
 axes.axvline(x=-1, color="black", linestyle="-", alpha=0.5)
-axes.axvline(x=1, color="black", linestyle="-", alpha=0.5)
+axes.axvline(x=0, color="black", linestyle="-", alpha=0.5)
 
 os.makedirs("data/graphs", exist_ok=True)
 
 plt.savefig("data/graphs/Simulation7.png", dpi=300)
-print("Graph saved to data/graphs/Simulation7.png")
 
 #plt.show()

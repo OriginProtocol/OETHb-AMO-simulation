@@ -31,7 +31,7 @@ sim_script = $(if $(filter 3A 3B 5A 5B 6A,$1),simulation_ratio_amount_tick.py,si
 simulation7: $(VENV_DIR)/bin/activate
 	@echo "Generating graphs for simulation7.."
 	@. $(VENV_DIR)/bin/activate; $(PYTHON) $(SCRIPT_DIR)/simulation_7.py
-	@echo "Graphs generated successfully for simulation4B!"
+	@echo "Graphs generated successfully for simulation7!"
 
 # Generate explicit targets for each simulation
 define simulation_target

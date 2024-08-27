@@ -83,27 +83,23 @@ contract Simulation7 is Base_Simulations_ {
         );
 
         // Provide liquidity between ticks around price where we want to rebalance from
-        int24 lowerTargetTick = sugarHelper.getTickAtSqrtRatio(priceToRebalanceFrom);
+        int24 lowerTargetTick = sugarHelper.getTickAtSqrtRatio(priceToRebalanceFrom) > 0
+            ? sugarHelper.getTickAtSqrtRatio(priceToRebalanceFrom) - 1
+            : sugarHelper.getTickAtSqrtRatio(priceToRebalanceFrom);
         int24 upperTargetTick = lowerTargetTick + 1;
         provideLiquidity(DEFAULT_INITIAL_DEPOSIT, DEFAULT_INITIAL_DEPOSIT, lowerTargetTick, upperTargetTick, true);
 
         // Swap to push price to targeted price
         if (price > priceToRebalanceFrom) {
-            // As priceToRebalanceFrom represent the price at the lower tick, but in this case the lower tick is more "on the left" than the upper tick
-            // Pushing the price to the lower tick will ensure that we will have to rebalance from a price that have liquidity above.
             swapWETHExactInput(AMOUT_TO_SWAP_TO_PUSH_PRICE, priceToRebalanceFrom, true);
             (price,,,,,) = pool.slot0();
             // Ensure the price has been pushed enough on the left side.
             assertLe(price, priceToRebalanceFrom, "Price after swap is not lower than the price to rebalance from");
         } else if (price < priceToRebalanceFrom) {
-            // As priceToRebalanceFrom represent the price at the lower tick, to be the pass price the liquidity
-            // We should use the price at the tick above, to ensure we will have to rebalance from a price that have liquidity below.
-            // Otherwise there is not a lot of interest to do it, as we will jut loose money from swap fees.
-            uint160 abovePrice = TickMath.getSqrtRatioAtTick(TickMath.getTickAtSqrtRatio(priceToRebalanceFrom) + 1);
-            swapOETHbExactInput(AMOUT_TO_SWAP_TO_PUSH_PRICE, abovePrice, true);
+            swapOETHbExactInput(AMOUT_TO_SWAP_TO_PUSH_PRICE, priceToRebalanceFrom, true);
             (price,,,,,) = pool.slot0();
             // Ensure the price has been pushed enough on the right side.
-            assertGt(price, priceToRebalanceFrom, "Price after swap is not greater than the price to rebalance from");
+            assertEq(price, priceToRebalanceFrom, "Price after swap is not greater than the price to rebalance from");
         }
 
         if (price < targetPrice) {
@@ -192,7 +188,7 @@ contract Simulation7 is Base_Simulations_ {
 
     /// @notice Calculate the price between two ticks.
     /// For example: lowerTick = -1, upperTick = 0, percentage = 0.5 ether
-    /// This will return the price in the middle of the two ticks. 
+    /// This will return the price in the middle of the two ticks.
     /// @dev This is not 100% exact!!! But it should be enough for testing.
     /// Using, lowerTick = -1, upperTick = 0, percentage = 0.2 ether
     /// Could mean that we want to price using the tick 0.2, even if this doesn't exist
